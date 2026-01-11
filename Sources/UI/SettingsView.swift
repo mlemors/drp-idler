@@ -8,7 +8,7 @@ public enum AppTab: Int {
     var windowSize: CGSize {
         switch self {
         case .application:
-            return CGSize(width: 600, height: 650)
+            return CGSize(width: 600, height: 500)
         case .settings:
             return CGSize(width: 500, height: 300)
         case .updates:

@@ -32,7 +32,9 @@ public struct SettingsTab: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
-
+                
+                Divider()
+                    .padding(.vertical, 8)
                 
                 // Launch at Login
                 GroupBox {
