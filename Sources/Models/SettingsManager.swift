@@ -5,7 +5,9 @@ extension Defaults.Keys {
     // Application settings
     static let clientId = Key<String>("clientId", default: "")
     static let appName = Key<String>("appName", default: "")
+    static let appIconData = Key<Data?>("appIconData", default: nil)
     static let activityType = Key<Int>("activityType", default: 0) // Playing
+    static let isActivityEnabled = Key<Bool>("isActivityEnabled", default: true)
     
     // Details & State
     static let details = Key<String>("details", default: "")
@@ -62,8 +64,16 @@ public class SettingsManager: ObservableObject {
         didSet { Defaults[.appName] = appName }
     }
     
+    @Published var appIconData: Data? = Defaults[.appIconData] {
+        didSet { Defaults[.appIconData] = appIconData }
+    }
+    
     @Published var activityType: ActivityType = ActivityType(rawValue: Defaults[.activityType]) ?? .playing {
         didSet { Defaults[.activityType] = activityType.rawValue }
+    }
+    
+    @Published var isActivityEnabled: Bool = Defaults[.isActivityEnabled] {
+        didSet { Defaults[.isActivityEnabled] = isActivityEnabled }
     }
     
     // Details & State

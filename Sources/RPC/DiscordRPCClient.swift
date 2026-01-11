@@ -6,6 +6,7 @@ import Darwin
 public class DiscordRPCClient: ObservableObject {
     @Published public var isConnected = false
     @Published public var currentUser: String?
+    @Published public var isActivityEnabled = false
     
     private var socketFd: Int32 = -1
     private var connectionTask: Task<Void, Never>?
@@ -16,7 +17,63 @@ public class DiscordRPCClient: ObservableObject {
     private let maxPipes = 10
     private let reconnectInterval: TimeInterval = 5.0
     
-    public init() {}
+    public init() {
+        // Load saved state
+        self.isActivityEnabled = SettingsManager.shared.isActivityEnabled
+    }
+    
+    // MARK: - Activity Control
+    
+    /// Toggle activity on/off
+    public func toggleActivity() async {
+        isActivityEnabled.toggle()
+        SettingsManager.shared.isActivityEnabled = isActivityEnabled
+        
+        print("[RPC] Activity toggled: \(isActivityEnabled ? "Enabled" : "Disabled")")
+        
+        if !isActivityEnabled {
+            // Clear activity when disabled
+            await clearActivity()
+        } else {
+            // Send activity when enabled
+            print("[RPC] Activity enabled, sending current activity...")
+            let settings = SettingsManager.shared
+            
+            // Build timestamps
+            let startTimestamp = Int(Date().timeIntervalSince1970)
+            let timestamps = RPCTimestamps(start: startTimestamp, end: nil)
+            
+            // Build party if set
+            var party: RPCParty? = nil
+            if settings.partySize > 0 && settings.partyMax > 0 {
+                party = RPCParty(
+                    id: "party-\(UUID().uuidString)",
+                    size: [settings.partySize, settings.partyMax]
+                )
+            }
+            
+            // Build buttons if set
+            var buttons: [RPCButton]? = nil
+            if !settings.button1Text.isEmpty && !settings.button1URL.isEmpty {
+                buttons = [RPCButton(label: settings.button1Text, url: settings.button1URL)]
+            }
+            
+            // Create rich presence
+            let richPresence = RichPresence(
+                details: settings.details.isEmpty ? nil : settings.details,
+                state: settings.state.isEmpty ? nil : settings.state,
+                timestamps: timestamps,
+                assets: nil,
+                party: party,
+                buttons: buttons
+            )
+            
+            print("[RPC] Sending activity after enable: details=\(settings.details), state=\(settings.state)")
+            
+            // Send to Discord
+            await setActivity(richPresence, activityType: settings.activityType)
+        }
+    }
     
     // MARK: - Public Methods
     
@@ -183,7 +240,12 @@ public class DiscordRPCClient: ObservableObject {
     
     /// Send handshake message
     private func sendHandshake() async -> Bool {
-        guard !clientId.isEmpty else { return false }
+        guard !clientId.isEmpty else {
+            print("[RPC] Cannot send handshake: clientId is empty")
+            return false
+        }
+        
+        print("[RPC] Sending handshake with clientId: \(clientId)")
         
         let handshake: [String: Any] = [
             "v": 1,
@@ -204,19 +266,26 @@ public class DiscordRPCClient: ObservableObject {
     
     /// Send SET_ACTIVITY command
     public func setActivity(_ activity: RichPresence, activityType: ActivityType) async {
-        guard isConnected else { return }
+        guard isConnected else {
+            print("[RPC] Cannot set activity: not connected")
+            return
+        }
         
         var activityDict: [String: Any] = [
             "type": activityType.rawValue,
             "instance": false
         ]
         
+        print("[RPC] Building activity with type: \(activityType.rawValue)")
+        
         if let details = activity.details, !details.isEmpty {
             activityDict["details"] = details
+            print("[RPC]   - details: \(details)")
         }
         
         if let state = activity.state, !state.isEmpty {
             activityDict["state"] = state
+            print("[RPC]   - state: \(state)")
         }
         
         if let assets = activity.assets {

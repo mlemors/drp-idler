@@ -11,6 +11,17 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize RPC client
         rpcClient = DiscordRPCClient()
         
+        // Load Client ID from settings
+        let settings = SettingsManager.shared
+        if !settings.clientId.isEmpty {
+            rpcClient.updateClientId(settings.clientId)
+            print("[App] Loaded Client ID from settings: \(settings.clientId)")
+        } else {
+            print("[App] No Client ID found in settings")
+        }
+        
+        print("[App] Activity status: \(rpcClient.isActivityEnabled ? "Enabled" : "Disabled")")
+        
         // Configure as menu bar only app (no dock icon)
         NSApp.setActivationPolicy(.accessory)
         
@@ -20,6 +31,19 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         // Start RPC client
         Task {
             await rpcClient.startConnectionLoop()
+            
+            // Wait for connection to establish
+            var attempts = 0
+            while !rpcClient.isConnected && attempts < 10 {
+                try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+                attempts += 1
+            }
+            
+            // Send initial activity if connected and enabled
+            if rpcClient.isConnected && rpcClient.isActivityEnabled {
+                try? await Task.sleep(nanoseconds: 500_000_000) // Extra 500ms for Discord to be ready
+                await sendInitialActivity()
+            }
         }
         
         // Setup sleep/wake notifications
@@ -40,8 +64,22 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = NSImage(systemSymbolName: "gamecontroller.fill", accessibilityDescription: "DiscordRPC-Idler")
         }
         
+        updateMenu()
+    }
+    
+    private func updateMenu() {
         let menu = NSMenu()
         
+        // Activity Toggle
+        let activityItem = NSMenuItem(
+            title: rpcClient.isActivityEnabled ? "Enabled" : "Disabled",
+            action: #selector(toggleActivity),
+            keyEquivalent: "a"
+        )
+        activityItem.state = rpcClient.isActivityEnabled ? .on : .off
+        menu.addItem(activityItem)
+        
+        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "About DiscordRPC-Idler", action: #selector(showAbout), keyEquivalent: ""))
@@ -49,6 +87,13 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
         statusItem.menu = menu
+    }
+    
+    @objc private func toggleActivity() {
+        Task {
+            await rpcClient.toggleActivity()
+            updateMenu()
+        }
     }
     
     @objc private func openSettings() {
@@ -98,6 +143,50 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         // Reconnect after wake
         Task {
             await rpcClient.reconnect()
+        }
+    }
+    
+    private func sendInitialActivity() async {
+        print("[App] Sending initial activity from AppDelegate...")
+        let settings = SettingsManager.shared
+        
+        // Build timestamps
+        let startTimestamp = Int(Date().timeIntervalSince1970)
+        let timestamps = RPCTimestamps(start: startTimestamp, end: nil)
+        
+        // Build party if set
+        var party: RPCParty? = nil
+        if settings.partySize > 0 && settings.partyMax > 0 {
+            party = RPCParty(
+                id: "party-\(UUID().uuidString)",
+                size: [settings.partySize, settings.partyMax]
+            )
+        }
+        
+        // Build buttons if set
+        var buttons: [RPCButton]? = nil
+        if !settings.button1Text.isEmpty && !settings.button1URL.isEmpty {
+            buttons = [RPCButton(label: settings.button1Text, url: settings.button1URL)]
+        }
+        
+        // Create rich presence
+        let richPresence = RichPresence(
+            details: settings.details.isEmpty ? nil : settings.details,
+            state: settings.state.isEmpty ? nil : settings.state,
+            timestamps: timestamps,
+            assets: nil,
+            party: party,
+            buttons: buttons
+        )
+        
+        // Send to Discord multiple times to ensure it arrives
+        for attempt in 1...5 {
+            await rpcClient.setActivity(richPresence, activityType: settings.activityType)
+            print("[App] Initial activity sent (attempt \(attempt)/5)")
+            
+            if attempt < 5 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
+            }
         }
     }
 }

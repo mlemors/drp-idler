@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:discordrpc-idler}",
+            "name": "Debug DiscordRPC-Idler",
+            "target": "DiscordRPC-Idler",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug DiscordRPC-Idler"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:discordrpc-idler}",
+            "name": "Release DiscordRPC-Idler",
+            "target": "DiscordRPC-Idler",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release DiscordRPC-Idler"
+        }
+    ]
+}

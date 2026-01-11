@@ -5,9 +5,11 @@ public struct ApplicationTab: View {
     @EnvironmentObject var settings: SettingsManager
     @State private var elapsedTime: TimeInterval = 0
     @State private var timer: Timer?
-    @State private var updateTimer: Timer?
     @State private var startTime = Date()
     @State private var lastUpdate = Date()
+    @State private var isLoadingAppInfo = false
+    @State private var appInfoError: String?
+    @State private var updateTask: Task<Void, Never>?
     
     public init() {}
     
@@ -28,17 +30,42 @@ public struct ApplicationTab: View {
                         .padding(1)
                     
                     HStack(alignment: .top, spacing: 12) {
-                        // Large Image Placeholder
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Image(systemName: "photo")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.gray)
-                            )
-
+                        // Large Image (Application Icon from Discord)
+                        ZStack {
+                            if let iconData = settings.appIconData,
+                               let nsImage = NSImage(data: iconData) {
+                                Image(nsImage: nsImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            } else {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 80, height: 80)
+                                    .overlay(
+                                        Image(systemName: "photo")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(.gray)
+                                    )
+                            }
+                            
+                            if isLoadingAppInfo {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.black.opacity(0.5))
+                                    .frame(width: 80, height: 80)
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                        }
+                        
                         VStack(alignment: .leading, spacing: 4) {
+                            // Application Name (from Discord API)
+                            if !settings.appName.isEmpty {
+                                Text(settings.appName)
+                                    .font(.system(size: 14, weight: .semibold))
+                            }
+                            
                             // Details
                             if !settings.details.isEmpty {
                                 Text(settings.details)
@@ -121,14 +148,37 @@ public struct ApplicationTab: View {
                             .textFieldStyle(.roundedBorder)
                             .onChange(of: settings.clientId) { newValue in
                                 Task {
-                                    await rpcClient.disconnect()
-                                    rpcClient.updateClientId(newValue)
-                                    await rpcClient.reconnect()
+                                    await loadApplicationInfo(clientId: newValue)
                                 }
                             }
-                        Text("Create an application at discord.com/developers/applications")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
+                        
+                        if isLoadingAppInfo {
+                            HStack(spacing: 4) {
+                                ProgressView()
+                                    .scaleEffect(0.6)
+                                    .frame(width: 12, height: 12)
+                                Text("Loading application info...")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                        } else if let error = appInfoError {
+                            Text(error)
+                                .font(.system(size: 11))
+                                .foregroundColor(.red)
+                        } else if !settings.appName.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                    .font(.system(size: 11))
+                                Text("Loaded: \(settings.appName)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                        } else {
+                            Text("Create an application at discord.com/developers/applications")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
                     }
                     
                     // Activity Type
@@ -143,6 +193,9 @@ public struct ApplicationTab: View {
                         }
                         .pickerStyle(.menu)
                         .labelsHidden()
+                        .onChange(of: settings.activityType) { _ in
+                            scheduleUpdate()
+                        }
                     }
                     
                     // Detail (line 1)
@@ -151,6 +204,9 @@ public struct ApplicationTab: View {
                             .font(.system(size: 13, weight: .medium))
                         TextField("What you're doing", text: $settings.details)
                             .textFieldStyle(.roundedBorder)
+                            .onChange(of: settings.details) { _ in
+                                scheduleUpdate()
+                            }
                     }
                     
                     // State (line 2)
@@ -159,6 +215,9 @@ public struct ApplicationTab: View {
                             .font(.system(size: 13, weight: .medium))
                         TextField("Additional info", text: $settings.state)
                             .textFieldStyle(.roundedBorder)
+                            .onChange(of: settings.state) { _ in
+                                scheduleUpdate()
+                            }
                     }
                     
                     // Stream Link
@@ -168,6 +227,9 @@ public struct ApplicationTab: View {
                             .foregroundColor(.secondary)
                         TextField("Enter a value", text: $settings.streamURL)
                             .textFieldStyle(.roundedBorder)
+                            .onChange(of: settings.streamURL) { _ in
+                                scheduleUpdate()
+                            }
                     }
                     
                     // Party Size & Maximum Party Size
@@ -180,6 +242,9 @@ public struct ApplicationTab: View {
                                 set: { settings.partySize = Int($0) ?? 0 }
                             ))
                             .textFieldStyle(.roundedBorder)
+                            .onChange(of: settings.partySize) { _ in
+                                scheduleUpdate()
+                            }
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -190,6 +255,9 @@ public struct ApplicationTab: View {
                                 set: { settings.partyMax = Int($0) ?? 0 }
                             ))
                             .textFieldStyle(.roundedBorder)
+                            .onChange(of: settings.partyMax) { _ in
+                                scheduleUpdate()
+                            }
                         }
                     }
                 }
@@ -198,23 +266,17 @@ public struct ApplicationTab: View {
         }
         .onAppear {
             startTimer()
-            scheduleActivityUpdates()
+            // Initial activity update when tab appears
+            if rpcClient.isActivityEnabled {
+                Task { 
+                    // Wait a bit for connection to establish
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+                    await updateActivity() 
+                }
+            }
         }
         .onDisappear {
             stopTimer()
-            updateTimer?.invalidate()
-            updateTimer = nil
-        }
-    }
-    
-    private func scheduleActivityUpdates() {
-        // Update immediately on appear
-        Task { await updateActivity() }
-        
-        // Then update every 5 seconds
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            // Only update if settings might have changed
-            Task { await updateActivity() }
         }
     }
     
@@ -237,7 +299,26 @@ public struct ApplicationTab: View {
         return String(format: "%d:%02d:%02d elapsed", hours, minutes, seconds)
     }
     
+    private func scheduleUpdate() {
+        // Cancel any pending update
+        updateTask?.cancel()
+        
+        // Schedule new update after 500ms
+        updateTask = Task {
+            try? await Task.sleep(nanoseconds: 500_000_000) // 500ms debounce
+            if !Task.isCancelled {
+                await updateActivity()
+            }
+        }
+    }
+    
     private func updateActivity() async {
+        // Only send activity if enabled
+        guard rpcClient.isActivityEnabled else {
+            print("[App] Activity update skipped - not enabled")
+            return
+        }
+        
         // Ensure we're connected
         if !rpcClient.isConnected {
             await rpcClient.reconnect()
@@ -286,6 +367,59 @@ public struct ApplicationTab: View {
         await rpcClient.setActivity(richPresence, activityType: settings.activityType)
         
         print("[App] Activity updated with type: \(settings.activityType.displayName)")
+    }
+    
+    private func loadApplicationInfo(clientId: String) async {
+        guard !clientId.isEmpty else {
+            settings.appName = ""
+            settings.appIconData = nil
+            appInfoError = nil
+            return
+        }
+        
+        isLoadingAppInfo = true
+        appInfoError = nil
+        
+        do {
+            let appInfo = try await DiscordAPI.shared.fetchApplicationInfo(clientId: clientId)
+            
+            // Update app name
+            await MainActor.run {
+                settings.appName = appInfo.name
+            }
+            
+            // Load icon if available
+            if let iconURL = appInfo.iconURL() {
+                let iconData = try await DiscordAPI.shared.fetchIconImage(from: iconURL)
+                await MainActor.run {
+                    settings.appIconData = iconData
+                }
+            } else {
+                await MainActor.run {
+                    settings.appIconData = nil
+                }
+            }
+            
+            // Reconnect with new client ID
+            await rpcClient.disconnect()
+            rpcClient.updateClientId(clientId)
+            await rpcClient.reconnect()
+            
+            await MainActor.run {
+                isLoadingAppInfo = false
+                appInfoError = nil  // Clear error on success
+            }
+            
+            print("[App] Loaded application info: \(appInfo.name)")
+        } catch {
+            await MainActor.run {
+                isLoadingAppInfo = false
+                appInfoError = "Failed to load application: \(error.localizedDescription)"
+                settings.appName = ""
+                settings.appIconData = nil
+            }
+            print("[App] Error loading application info: \(error)")
+        }
     }
 }
 
