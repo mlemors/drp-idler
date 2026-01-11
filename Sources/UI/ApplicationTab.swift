@@ -8,213 +8,160 @@ struct ApplicationTab: View {
         HStack(spacing: 0) {
             // Left side: Configuration
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
                 // Client ID Section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Client ID")
-                        .font(.headline)
-                    
-                    TextField("Enter your Discord Application ID", text: $settings.clientId)
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: settings.clientId) { newValue in
-                            rpcClient.updateClientId(newValue)
-                        }
-                    
-                    HStack(spacing: 4) {
-                        Text("Create your application at")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 6) {
+                        TextField("Discord Application ID", text: $settings.clientId)
+                            .textFieldStyle(.roundedBorder)
+                            .onChange(of: settings.clientId) { newValue in
+                                rpcClient.updateClientId(newValue)
+                            }
                         
-                        Link("discord.com/developers/applications", destination: URL(string: "https://discord.com/developers/applications")!)
-                            .font(.caption)
+                        HStack(spacing: 4) {
+                            Text("Get ID from")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Link("discord.com/developers", destination: URL(string: "https://discord.com/developers/applications")!)
+                                .font(.caption)
+                        }
                     }
+                } label: {
+                    Text("Client ID")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                 }
                 
-                Divider()
-                
                 // Activity Type
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Activity Type")
-                        .font(.headline)
-                    
-                    Picker("Type", selection: $settings.activityType) {
+                GroupBox {
+                    Picker("", selection: $settings.activityType) {
                         ForEach(ActivityType.allCases, id: \.self) { type in
                             Text(type.displayName).tag(type)
                         }
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
+                } label: {
+                    Text("Activity Type")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                 }
                 
-                Divider()
-                
                 // Details & State
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Activity Information")
-                        .font(.headline)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Details")
-                            .font(.subheadline)
+                GroupBox {
+                    VStack(spacing: 8) {
                         TextField("What you're doing", text: $settings.details)
                             .textFieldStyle(.roundedBorder)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("State")
-                            .font(.subheadline)
                         TextField("Additional info", text: $settings.state)
                             .textFieldStyle(.roundedBorder)
                     }
+                } label: {
+                    Text("Details & State")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                 }
                 
-                Divider()
-                
                 // Images
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Images")
-                        .font(.headline)
-                    
-                    HStack(spacing: 20) {
-                        // Large Image
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Large Image")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            
-                            TextField("Image Key", text: $settings.largeImageKey)
+                GroupBox {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            TextField("Large Image Key", text: $settings.largeImageKey)
                                 .textFieldStyle(.roundedBorder)
-                            
                             TextField("Hover Text", text: $settings.largeImageText)
                                 .textFieldStyle(.roundedBorder)
                         }
                         
-                        // Small Image
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Small Image")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            
-                            TextField("Image Key", text: $settings.smallImageKey)
+                        HStack(spacing: 8) {
+                            TextField("Small Image Key", text: $settings.smallImageKey)
                                 .textFieldStyle(.roundedBorder)
-                            
                             TextField("Hover Text", text: $settings.smallImageText)
                                 .textFieldStyle(.roundedBorder)
                         }
                     }
+                } label: {
+                    Text("Images")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                 }
-                
-                Divider()
                 
                 // Buttons
-                VStack(alignment: .leading, spacing: 12) {
+                GroupBox {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            TextField("Button 1 Label", text: $settings.button1Label)
+                                .textFieldStyle(.roundedBorder)
+                            TextField("URL", text: $settings.button1URL)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        HStack(spacing: 8) {
+                            TextField("Button 2 Label", text: $settings.button2Label)
+                                .textFieldStyle(.roundedBorder)
+                            TextField("URL", text: $settings.button2URL)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    }
+                } label: {
                     Text("Buttons (max 2)")
-                        .font(.headline)
-                    
-                    // Button 1
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Label")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            TextField("Button 1", text: $settings.button1Label)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("URL")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            TextField("https://...", text: $settings.button1URL)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                    }
-                    
-                    // Button 2
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Label")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            TextField("Button 2", text: $settings.button2Label)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("URL")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            TextField("https://...", text: $settings.button2URL)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                    }
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                 }
                 
-                Divider()
-                
-                // Party Size
-                HStack(spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Party Size")
-                            .font(.headline)
-                        
-                        HStack(spacing: 12) {
-                            TextField("Current", value: $settings.partySize, format: .number)
+                // Party & Timestamps
+                HStack(spacing: 12) {
+                    GroupBox {
+                        HStack(spacing: 8) {
+                            TextField("Size", value: $settings.partySize, format: .number)
                                 .textFieldStyle(.roundedBorder)
-                                .frame(width: 80)
-                            
-                            Text("of")
-                            
+                                .frame(width: 50)
+                            Text("/")
                             TextField("Max", value: $settings.partyMax, format: .number)
                                 .textFieldStyle(.roundedBorder)
-                                .frame(width: 80)
+                                .frame(width: 50)
                         }
+                    } label: {
+                        Text("Party")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                     }
                     
-                    Spacer()
-                    
-                    // Timestamps
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Timestamps")
-                            .font(.headline)
-                        
-                        Picker("Mode", selection: $settings.timestampMode) {
-                            ForEach(TimestampMode.allCases, id: \.self) { mode in
-                                Text(mode.displayName).tag(mode)
+                    GroupBox {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Picker("", selection: $settings.timestampMode) {
+                                ForEach(TimestampMode.allCases, id: \.self) { mode in
+                                    Text(mode.displayName).tag(mode)
+                                }
                             }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(width: 200)
-                        
-                        if settings.timestampMode == .custom {
-                            DatePicker(
-                                "Start Time",
-                                selection: Binding(
+                            .pickerStyle(.menu)
+                            .labelsHidden()
+                            
+                            if settings.timestampMode == .custom {
+                                DatePicker("", selection: Binding(
                                     get: { settings.customTimestamp ?? Date() },
                                     set: { settings.customTimestamp = $0 }
-                                ),
-                                displayedComponents: [.date, .hourAndMinute]
-                            )
-                            .datePickerStyle(.compact)
+                                ), displayedComponents: [.date, .hourAndMinute])
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                            }
                         }
+                    } label: {
+                        Text("Timestamps")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                     }
                 }
-                
-                Divider()
                 
                 // Update Button
-                HStack {
-                    Spacer()
-                    
-                    Button(action: updatePresence) {
+                Button(action: updatePresence) {
+                    HStack {
+                        Image(systemName: "arrow.up.circle.fill")
                         Text("Update Presence")
-                            .frame(minWidth: 150)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(settings.clientId.isEmpty)
-                    
-                    Spacer()
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(.vertical, 8)
+                .buttonStyle(.borderedProminent)
+                .disabled(settings.clientId.isEmpty)
+                .controlSize(.large)
                 }
                 .padding()
             }
@@ -228,137 +175,149 @@ struct ApplicationTab: View {
                     .font(.title3)
                     .fontWeight(.semibold)
                 
-                // Discord Message Card Mockup
-                HStack(alignment: .top, spacing: 16) {
-                    // Avatar
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 50, height: 50)
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
-                        )
+                // Discord Message Card Preview
+                VStack(alignment: .leading, spacing: 0) {
+                    // User Header
+                    HStack(spacing: 10) {
+                        Circle()
+                            .fill(Color.blue.opacity(0.3))
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.blue)
+                            )
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text("YourUsername")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("BOT")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue)
+                                    .cornerRadius(3)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        // Username with Bot badge
-                        HStack(spacing: 8) {
-                            Text("YourUsername")
-                                .font(.headline)
-                            
-                            Text("BOT")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.blue)
-                                .cornerRadius(4)
+                    // Activity Content
+                    HStack(alignment: .top, spacing: 10) {
+                        // Image
+                        if !settings.largeImageKey.isEmpty {
+                            ZStack(alignment: .bottomTrailing) {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.gray.opacity(0.15))
+                                    .frame(width: 70, height: 70)
+                                    .overlay(
+                                        VStack(spacing: 2) {
+                                            Image(systemName: "photo")
+                                                .font(.system(size: 20))
+                                                .foregroundColor(.gray)
+                                            Text(settings.largeImageKey.prefix(8))
+                                                .font(.system(size: 8))
+                                                .foregroundColor(.gray)
+                                        }
+                                    )
+                                
+                                if !settings.smallImageKey.isEmpty {
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.2))
+                                        .frame(width: 22, height: 22)
+                                        .overlay(
+                                            Image(systemName: "circle.fill")
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.green)
+                                        )
+                                        .offset(x: 6, y: 6)
+                                }
+                            }
                         }
                         
-                        // Activity Card
-                        VStack(alignment: .leading, spacing: 0) {
-                            HStack(alignment: .top, spacing: 12) {
-                                // Large Image
-                                if !settings.largeImageKey.isEmpty {
-                                    ZStack(alignment: .bottomTrailing) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.gray.opacity(0.2))
-                                            .frame(width: 80, height: 80)
-                                            .overlay(
-                                                Text(settings.largeImageKey)
-                                                    .font(.caption2)
-                                                    .multilineTextAlignment(.center)
-                                                    .padding(4)
-                                            )
-                                        
-                                        // Small Image overlay
-                                        if !settings.smallImageKey.isEmpty {
-                                            Circle()
-                                                .fill(Color.gray.opacity(0.3))
-                                                .frame(width: 24, height: 24)
-                                                .overlay(
-                                                    Text(settings.smallImageKey.prefix(2))
-                                                        .font(.system(size: 8))
-                                                )
-                                                .offset(x: 8, y: 8)
-                                        }
-                                    }
-                                }
-                                
-                                // Activity Details
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(settings.activityType.displayName)
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.secondary)
-                                    
-                                    if !settings.details.isEmpty {
-                                        Text(settings.details)
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                    }
-                                    
-                                    if !settings.state.isEmpty {
-                                        Text(settings.state)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    if settings.partySize > 0 && settings.partyMax > 0 {
-                                        Text("\(settings.partySize) of \(settings.partyMax)")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    if settings.timestampMode != .none {
-                                        Text("Elapsed: 00:00:00")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                
-                                Spacer()
-                            }
-                            .padding()
+                        // Details
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(settings.activityType.displayName)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.secondary)
                             
-                            // Buttons
-                            if (!settings.button1Label.isEmpty && !settings.button1URL.isEmpty) ||
-                               (!settings.button2Label.isEmpty && !settings.button2URL.isEmpty) {
-                                VStack(spacing: 8) {
-                                    if !settings.button1Label.isEmpty && !settings.button1URL.isEmpty {
-                                        Button(action: {}) {
-                                            Text(settings.button1Label)
-                                                .font(.caption)
-                                                .frame(maxWidth: .infinity)
-                                        }
-                                        .buttonStyle(.bordered)
-                                    }
-                                    
-                                    if !settings.button2Label.isEmpty && !settings.button2URL.isEmpty {
-                                        Button(action: {}) {
-                                            Text(settings.button2Label)
-                                                .font(.caption)
-                                                .frame(maxWidth: .infinity)
-                                        }
-                                        .buttonStyle(.bordered)
-                                    }
-                                }
-                                .padding(.horizontal)
-                                .padding(.bottom)
+                            if !settings.details.isEmpty {
+                                Text(settings.details)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .lineLimit(2)
+                            }
+                            
+                            if !settings.state.isEmpty {
+                                Text(settings.state)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(2)
+                            }
+                            
+                            if settings.partySize > 0 && settings.partyMax > 0 {
+                                Text("\(settings.partySize) of \(settings.partyMax)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            if settings.timestampMode != .none {
+                                Text("00:00:00 elapsed")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
                             }
                         }
-                        .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(8)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                    
+                    // Buttons
+                    if (!settings.button1Label.isEmpty && !settings.button1URL.isEmpty) ||
+                       (!settings.button2Label.isEmpty && !settings.button2URL.isEmpty) {
+                        VStack(spacing: 6) {
+                            if !settings.button1Label.isEmpty && !settings.button1URL.isEmpty {
+                                HStack {
+                                    Text(settings.button1Label)
+                                        .font(.system(size: 12, weight: .medium))
+                                    Spacer()
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(4)
+                            }
+                            
+                            if !settings.button2Label.isEmpty && !settings.button2URL.isEmpty {
+                                HStack {
+                                    Text(settings.button2Label)
+                                        .font(.system(size: 12, weight: .medium))
+                                    Spacer()
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(4)
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 12)
                     }
                 }
-                .padding()
-                .frame(maxWidth: 350)
-                .background(Color(NSColor.textBackgroundColor))
-                .cornerRadius(12)
-                .shadow(radius: 2)
+                .frame(maxWidth: 320)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
                 
-                Text("Live preview updates as you type")
-                    .font(.caption)
+                Text("Updates live
                     .foregroundColor(.secondary)
                 
                 Spacer()
