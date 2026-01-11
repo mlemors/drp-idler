@@ -8,6 +8,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
     private var rpcClient: DiscordRPCClient!
     
     public func applicationDidFinishLaunching(_ notification: Notification) {
+        // Configure as menu bar only app (no dock icon)
+        NSApp.setActivationPolicy(.accessory)
+        
         // Initialize RPC client
         rpcClient = DiscordRPCClient()
         
@@ -22,27 +25,33 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         
         print("[App] Activity status: \(rpcClient.isActivityEnabled ? "Enabled" : "Disabled")")
         
-        // Configure as menu bar only app (no dock icon)
-        NSApp.setActivationPolicy(.accessory)
-        
         // Setup menu bar
         setupMenuBar()
         
-        // Start RPC client
+        // Start RPC client with delayed connection
         Task {
+            // Give Discord and system a moment to be ready
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second initial delay
+            
             await rpcClient.startConnectionLoop()
             
-            // Wait for connection to establish
+            // Wait for connection to establish (longer timeout)
             var attempts = 0
-            while !rpcClient.isConnected && attempts < 10 {
+            while !rpcClient.isConnected && attempts < 20 {
                 try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
                 attempts += 1
             }
             
+            print("[App] Connection attempts: \(attempts), Connected: \(rpcClient.isConnected)")
+            
             // Send initial activity if connected and enabled
             if rpcClient.isConnected && rpcClient.isActivityEnabled {
-                try? await Task.sleep(nanoseconds: 500_000_000) // Extra 500ms for Discord to be ready
+                print("[App] Sending initial activity...")
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second for Discord to be ready
                 await sendInitialActivity()
+                print("[App] Initial activity sent")
+            } else {
+                print("[App] Skipping initial activity - Connected: \(rpcClient.isConnected), Enabled: \(rpcClient.isActivityEnabled)")
             }
         }
         
@@ -150,6 +159,14 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         print("[App] Sending initial activity from AppDelegate...")
         let settings = SettingsManager.shared
         
+        // Check if we have any activity data
+        guard !settings.details.isEmpty || !settings.state.isEmpty else {
+            print("[App] No activity data configured (details and state are empty), skipping initial activity")
+            return
+        }
+        
+        print("[App] Activity data - details: '\(settings.details)', state: '\(settings.state)'")
+        
         // Build timestamps
         let startTimestamp = Int(Date().timeIntervalSince1970)
         let timestamps = RPCTimestamps(start: startTimestamp, end: nil)
@@ -179,14 +196,8 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
             buttons: buttons
         )
         
-        // Send to Discord multiple times to ensure it arrives
-        for attempt in 1...5 {
-            await rpcClient.setActivity(richPresence, activityType: settings.activityType)
-            print("[App] Initial activity sent (attempt \(attempt)/5)")
-            
-            if attempt < 5 {
-                try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
-            }
-        }
+        // Send to Discord
+        await rpcClient.setActivity(richPresence, activityType: settings.activityType)
+        print("[App] Initial activity sent")
     }
 }
