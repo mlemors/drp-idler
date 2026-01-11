@@ -31,11 +31,18 @@ public enum TimestampMode: String, Codable, CaseIterable {
 }
 
 /// Rich Presence Assets
-struct RPCAssets: Codable {
-    var largeImage: String?
-    var largeText: String?
-    var smallImage: String?
-    var smallText: String?
+public struct RPCAssets: Codable {
+    public var largeImage: String?
+    public var largeText: String?
+    public var smallImage: String?
+    public var smallText: String?
+    
+    public init(largeImage: String? = nil, largeText: String? = nil, smallImage: String? = nil, smallText: String? = nil) {
+        self.largeImage = largeImage
+        self.largeText = largeText
+        self.smallImage = smallImage
+        self.smallText = smallText
+    }
     
     enum CodingKeys: String, CodingKey {
         case largeImage = "large_image"
@@ -46,34 +53,49 @@ struct RPCAssets: Codable {
 }
 
 /// Rich Presence Button
-struct RPCButton: Codable {
-    var label: String
-    var url: String
+public struct RPCButton: Codable {
+    public var label: String
+    public var url: String
+    
+    public init(label: String, url: String) {
+        self.label = label
+        self.url = url
+    }
 }
 
 /// Rich Presence Timestamps
-struct RPCTimestamps: Codable {
-    var start: Int?
-    var end: Int?
+public struct RPCTimestamps: Codable {
+    public var start: Int?
+    public var end: Int?
+    
+    public init(start: Int? = nil, end: Int? = nil) {
+        self.start = start
+        self.end = end
+    }
 }
 
 /// Rich Presence Party
-struct RPCParty: Codable {
-    var id: String?
-    var size: [Int]?
+public struct RPCParty: Codable {
+    public var id: String?
+    public var size: [Int]?
+    
+    public init(id: String? = nil, size: [Int]? = nil) {
+        self.id = id
+        self.size = size
+    }
 }
 
 /// Complete Rich Presence Activity
-struct RichPresence: Codable {
-    var details: String?
-    var state: String?
-    var timestamps: RPCTimestamps?
-    var assets: RPCAssets?
-    var party: RPCParty?
-    var buttons: [RPCButton]?
-    var instance: Bool?
+public struct RichPresence: Codable {
+    public var details: String?
+    public var state: String?
+    public var timestamps: RPCTimestamps?
+    public var assets: RPCAssets?
+    public var party: RPCParty?
+    public var buttons: [RPCButton]?
+    public var instance: Bool?
     
-    init(
+    public init(
         details: String? = nil,
         state: String? = nil,
         timestamps: RPCTimestamps? = nil,

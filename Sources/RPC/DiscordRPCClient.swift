@@ -115,7 +115,7 @@ public class DiscordRPCClient: ObservableObject {
     }
     
     /// Send SET_ACTIVITY command
-    func setActivity(_ activity: RichPresence, activityType: ActivityType) async {
+    public func setActivity(_ activity: RichPresence, activityType: ActivityType) async {
         guard isConnected else { return }
         
         var activityDict: [String: Any] = [

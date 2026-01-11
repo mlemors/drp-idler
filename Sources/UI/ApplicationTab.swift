@@ -1,11 +1,15 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 public struct ApplicationTab: View {
     @EnvironmentObject var rpcClient: DiscordRPCClient
     @EnvironmentObject var settings: SettingsManager
     @State private var elapsedTime: TimeInterval = 0
     @State private var timer: Timer?
+    @State private var updateTimer: Timer?
     @State private var startTime = Date()
+    @State private var showingImagePicker = false
+    @State private var lastUpdate = Date()
     
     public init() {}
     
@@ -27,10 +31,34 @@ public struct ApplicationTab: View {
                     
                     HStack(alignment: .top, spacing: 12) {
                         // Large Image Placeholder
-                        ZStack(alignment: .bottomTrailing) {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 80, height: 80)
+                        Button(action: { showingImagePicker = true }) {
+                            ZStack(alignment: .bottomTrailing) {
+                                if let imageData = settings.largeImageData,
+                                   let nsImage = NSImage(data: imageData) {
+                                    Image(nsImage: nsImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 80, height: 80)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                } else {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 80, height: 80)
+                                        .overlay(
+                                            Image(systemName: "photo.badge.plus")
+                                                .font(.system(size: 24))
+                                                .foregroundColor(.gray)
+                                        )
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .fileImporter(
+                            isPresented: $showingImagePicker,
+                            allowedContentTypes: [.png, .jpeg, .gif],
+                            allowsMultipleSelection: false
+                        ) { result in
+                            handleImageSelection(result: result)
                         }
 
                         VStack(alignment: .leading, spacing: 4) {
@@ -72,6 +100,17 @@ public struct ApplicationTab: View {
                                         .font(.system(size: 13))
                                 }
                                 .foregroundColor(.secondary)
+                            }
+                            
+                            // Stream URL
+                            if !settings.streamURL.isEmpty && settings.activityType == .streaming {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.system(size: 11))
+                                    Text("Streaming")
+                                        .font(.system(size: 13))
+                                }
+                                .foregroundColor(.purple)
                             }
                         }
                     }
@@ -118,11 +157,36 @@ public struct ApplicationTab: View {
                     }
                     
                     // Application Name
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Application Name")
-                            .font(.system(size: 13, weight: .medium))
-                        TextField("Enter application name", text: $settings.appName)
-                            .textFieldStyle(.roundedBorder)
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Application Name")
+                                .font(.system(size: 13, weight: .medium))
+                            TextField("Enter application name", text: $settings.appName)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Image")
+                                .font(.system(size: 13, weight: .medium))
+                            Button(action: { showingImagePicker = true }) {
+                                HStack {
+                                    if let imageData = settings.largeImageData,
+                                       let nsImage = NSImage(data: imageData) {
+                                        Image(nsImage: nsImage)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 24, height: 24)
+                                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                                    } else {
+                                        Image(systemName: "photo.badge.plus")
+                                            .frame(width: 24, height: 24)
+                                    }
+                                    Text("Select Image")
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                        }
                     }
                     
                     // Detail (line 1)
@@ -178,9 +242,27 @@ public struct ApplicationTab: View {
         }
         .onAppear {
             startTimer()
+            scheduleActivityUpdates()
         }
         .onDisappear {
             stopTimer()
+            updateTimer?.invalidate()
+            updateTimer = nil
+        }
+        .onDrop(of: [.image], isTargeted: nil) { providers in
+            handleDrop(providers: providers)
+            return true
+        }
+    }
+    
+    private func scheduleActivityUpdates() {
+        // Update immediately on appear
+        Task { await updateActivity() }
+        
+        // Then update every 5 seconds
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
+            // Only update if settings might have changed
+            Task { await updateActivity() }
         }
     }
     
@@ -201,6 +283,102 @@ public struct ApplicationTab: View {
         let minutes = Int(interval) / 60 % 60
         let seconds = Int(interval) % 60
         return String(format: "%d:%02d:%02d elapsed", hours, minutes, seconds)
+    }
+    
+    private func updateActivity() async {
+        // Ensure we're connected
+        if !rpcClient.isConnected {
+            await rpcClient.reconnect()
+            // Give it a moment to connect
+            try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+        }
+        
+        // Build assets
+        var assets: RPCAssets? = nil
+        if let imageData = settings.largeImageData {
+            // For now, we'll use a placeholder since we can't upload images directly
+            // In a real implementation, you'd need to upload the image to Discord's CDN first
+            assets = RPCAssets(
+                largeImage: "custom_image", // This would be the uploaded image key
+                largeText: settings.appName,
+                smallImage: nil,
+                smallText: nil
+            )
+        }
+        
+        // Build timestamps
+        var timestamps: RPCTimestamps? = nil
+        if elapsedTime > 0 {
+            let startTimestamp = Int(startTime.timeIntervalSince1970)
+            timestamps = RPCTimestamps(start: startTimestamp, end: nil)
+        }
+        
+        // Build party
+        var party: RPCParty? = nil
+        if settings.partySize > 0 && settings.partyMax > 0 {
+            party = RPCParty(
+                id: "party-\(UUID().uuidString)",
+                size: [settings.partySize, settings.partyMax]
+            )
+        }
+        
+        // Build buttons
+        var buttons: [RPCButton]? = nil
+        if !settings.button1Text.isEmpty && !settings.button1URL.isEmpty {
+            buttons = [RPCButton(label: settings.button1Text, url: settings.button1URL)]
+        }
+        
+        // Create rich presence
+        let richPresence = RichPresence(
+            details: settings.details.isEmpty ? nil : settings.details,
+            state: settings.state.isEmpty ? nil : settings.state,
+            timestamps: timestamps,
+            assets: assets,
+            party: party,
+            buttons: buttons
+        )
+        
+        // Send to Discord
+        await rpcClient.setActivity(richPresence, activityType: settings.activityType)
+        
+        print("[App] Activity updated with type: \(settings.activityType.displayName)")
+    }
+    
+    private func handleImageSelection(result: Result<[URL], Error>) {
+        do {
+            let urls = try result.get()
+            guard let url = urls.first else { return }
+            
+            // Check if we have access to the file
+            guard url.startAccessingSecurityScopedResource() else {
+                print("Failed to access file")
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            // Read the image data
+            let imageData = try Data(contentsOf: url)
+            
+            // Store in settings
+            settings.largeImageData = imageData
+            
+            print("Image loaded: \(imageData.count) bytes")
+        } catch {
+            print("Error loading image: \(error)")
+        }
+    }
+    
+    private func handleDrop(providers: [NSItemProvider]) {
+        guard let provider = providers.first else { return }
+        
+        provider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) { data, error in
+            guard let data = data, error == nil else { return }
+            
+            DispatchQueue.main.async {
+                settings.largeImageData = data
+                print("Image dropped: \(data.count) bytes")
+            }
+        }
     }
 }
 
