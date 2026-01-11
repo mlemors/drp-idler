@@ -1,0 +1,96 @@
+import AppKit
+import SwiftUI
+
+@MainActor
+class AppDelegate: NSObject, NSApplicationDelegate {
+    private var statusItem: NSStatusItem!
+    private var settingsWindow: NSWindow?
+    private var rpcClient: DiscordRPCClient!
+    
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Initialize RPC client
+        rpcClient = DiscordRPCClient()
+        
+        // Configure as menu bar only app (no dock icon)
+        NSApp.setActivationPolicy(.accessory)
+        
+        // Setup menu bar
+        setupMenuBar()
+        
+        // Start RPC client
+        Task {
+            await rpcClient.startConnectionLoop()
+        }
+        
+        // Setup sleep/wake notifications
+        setupSleepWakeNotifications()
+    }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        Task {
+            await rpcClient.disconnect()
+        }
+    }
+    
+    private func setupMenuBar() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        
+        if let button = statusItem.button {
+            // Use SF Symbol for now (we'll create custom icon later)
+            button.image = NSImage(systemSymbolName: "gamecontroller.fill", accessibilityDescription: "Discord RPC Idler")
+        }
+        
+        let menu = NSMenu()
+        
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "About Discord RPC Idler", action: #selector(showAbout), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        
+        statusItem.menu = menu
+    }
+    
+    @objc private func openSettings() {
+        if settingsWindow == nil {
+            let settingsView = SettingsView()
+                .environmentObject(rpcClient)
+            
+            let hostingController = NSHostingController(rootView: settingsView)
+            
+            settingsWindow = NSWindow(contentViewController: hostingController)
+            settingsWindow?.title = "Discord RPC Idler Settings"
+            settingsWindow?.styleMask = [.titled, .closable, .miniaturizable]
+            settingsWindow?.setContentSize(NSSize(width: 700, height: 550))
+            settingsWindow?.center()
+        }
+        
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    @objc private func showAbout() {
+        let alert = NSAlert()
+        alert.messageText = "Discord RPC Idler"
+        alert.informativeText = "Version 1.0.0\n\nA native macOS menu bar app for Discord Rich Presence.\n\n© 2026"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+    
+    private func setupSleepWakeNotifications() {
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleWake),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func handleWake() {
+        // Reconnect after wake
+        Task {
+            await rpcClient.reconnect()
+        }
+    }
+}

@@ -1,0 +1,29 @@
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/xcuserdata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcworkspace/xcshareddata/
+
+# Build products
+build/
+DerivedData/
+*.app
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+*.xcodeproj
+
+# User-specific files
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+
+# macOS
+.DS_Store
