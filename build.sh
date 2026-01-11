@@ -57,7 +57,7 @@ cat > build/DiscordRPC-Idler.app/Contents/Info.plist << 'EOF'
 	<key>SUFeedURL</key>
 	<string>https://mlemors.github.io/discordrpc-idler/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>YOUR_PUBLIC_KEY_HERE</string>
+	<string>hyNqw4e6wICfKwmUuDv0xfp7YFCps2qqIVYGO2HsKlk=</string>
 </dict>
 </plist>
 EOF
