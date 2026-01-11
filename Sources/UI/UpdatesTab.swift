@@ -1,20 +1,22 @@
 import SwiftUI
 import Sparkle
 
-struct UpdatesTab: View {
+public struct UpdatesTab: View {
     @EnvironmentObject var settings: SettingsManager
     // Disable auto-start during development
     private let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
     
     let frequencies = ["Daily", "Weekly", "Monthly"]
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         VStack(spacing: 20) {
             Spacer()
             
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
                 // Check for Updates
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     Text("Check for Updates")
                         .frame(width: 140, alignment: .trailing)
                     
@@ -27,7 +29,7 @@ struct UpdatesTab: View {
                 }
                 
                 // Frequency
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     Text("Frequency")
                         .frame(width: 140, alignment: .trailing)
                     
@@ -37,7 +39,6 @@ struct UpdatesTab: View {
                         }
                     }
                     .pickerStyle(.menu)
-                    .frame(width: 120, alignment: .leading)
                     .disabled(!settings.autoCheckUpdates)
                     
                     Button("Check Now") {
@@ -52,7 +53,7 @@ struct UpdatesTab: View {
                     .padding(.vertical, 8)
                 
                 // Options
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     Text("Options")
                         .frame(width: 140, alignment: .trailing)
                     

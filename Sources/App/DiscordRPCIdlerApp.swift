@@ -1,11 +1,12 @@
 import SwiftUI
 import AppKit
 
-@main
-struct DiscordRPCIdlerApp: App {
+public struct DiscordRPCIdlerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
-    var body: some Scene {
+    public init() {}
+    
+    public var body: some Scene {
         Settings {
             EmptyView()
         }

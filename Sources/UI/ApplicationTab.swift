@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct ApplicationTab: View {
+public struct ApplicationTab: View {
     @EnvironmentObject var rpcClient: DiscordRPCClient
     @EnvironmentObject var settings: SettingsManager
     @State private var showingLargeImagePicker = false
@@ -10,7 +10,9 @@ struct ApplicationTab: View {
     @State private var timer: Timer?
     @State private var startTime = Date()
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 // Activity Type

@@ -2,12 +2,12 @@ import AppKit
 import SwiftUI
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate {
+public class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var rpcClient: DiscordRPCClient!
     
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    public func applicationDidFinishLaunching(_ notification: Notification) {
         // Initialize RPC client
         rpcClient = DiscordRPCClient()
         
@@ -26,7 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupSleepWakeNotifications()
     }
     
-    func applicationWillTerminate(_ notification: Notification) {
+    public func applicationWillTerminate(_ notification: Notification) {
         Task {
             await rpcClient.disconnect()
         }

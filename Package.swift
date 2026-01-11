@@ -10,6 +10,11 @@ let package = Package(
         .executable(
             name: "DiscordRPC-Idler",
             targets: ["DiscordRPCIdler"]
+        ),
+        .library(
+            name: "DiscordRPCIdlerLib",
+            type: .dynamic,
+            targets: ["DiscordRPCIdlerLib"]
         )
     ],
     dependencies: [
@@ -18,14 +23,21 @@ let package = Package(
         .package(url: "https://github.com/sindresorhus/LaunchAtLogin-Modern", from: "1.0.0"),
     ],
     targets: [
-        .executableTarget(
-            name: "DiscordRPCIdler",
+        .target(
+            name: "DiscordRPCIdlerLib",
             dependencies: [
                 .product(name: "Sparkle", package: "Sparkle"),
                 .product(name: "Defaults", package: "Defaults"),
                 .product(name: "LaunchAtLogin", package: "LaunchAtLogin-Modern"),
             ],
-            path: "Sources"
+            path: "Sources",
+            exclude: ["App/main.swift"]
+        ),
+        .executableTarget(
+            name: "DiscordRPCIdler",
+            dependencies: ["DiscordRPCIdlerLib"],
+            path: "Sources/App",
+            sources: ["main.swift"]
         )
     ]
 )

@@ -50,8 +50,8 @@ extension Defaults.Keys {
 
 /// Settings Manager - provides convenient access to all settings
 @MainActor
-class SettingsManager: ObservableObject {
-    static let shared = SettingsManager()
+public class SettingsManager: ObservableObject {
+    public static let shared = SettingsManager()
     
     // Application
     @Published var clientId: String = Defaults[.clientId] {

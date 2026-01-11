@@ -1,13 +1,15 @@
 import SwiftUI
 import LaunchAtLogin
 
-struct SettingsTab: View {
+public struct SettingsTab: View {
     @EnvironmentObject var rpcClient: DiscordRPCClient
     @EnvironmentObject var settings: SettingsManager
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(alignment: .leading ,spacing: 20) {
                 // Client ID
                 GroupBox {
                     VStack(alignment: .leading, spacing: 8) {
@@ -30,6 +32,7 @@ struct SettingsTab: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
+
                 
                 // Launch at Login
                 GroupBox {
@@ -45,10 +48,12 @@ struct SettingsTab: View {
                             .foregroundColor(.secondary)
                     }
                 } label: {
-                    Text("Menu Bar")
+                    Text("Client Settings")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
+                
+                
             }
             .padding()
         }
@@ -63,3 +68,4 @@ struct SettingsTab_Previews: PreviewProvider {
             .frame(width: 500, height: 250)
     }
 }
+

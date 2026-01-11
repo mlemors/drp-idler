@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum AppTab: Int {
+public enum AppTab: Int {
     case application = 0
     case settings = 1
     case updates = 2
@@ -17,13 +17,15 @@ enum AppTab: Int {
     }
 }
 
-struct SettingsView: View {
+public struct SettingsView: View {
     @EnvironmentObject var rpcClient: DiscordRPCClient
     @StateObject private var settings = SettingsManager.shared
     @State private var selectedTab: AppTab = .application
     @State private var settingsWindow: NSWindow?
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         TabView(selection: $selectedTab) {
             ApplicationTab()
                 .tabItem {

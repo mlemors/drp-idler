@@ -1,7 +1,7 @@
 import Foundation
 
 /// Discord RPC Activity Types
-enum ActivityType: Int, Codable, CaseIterable {
+public enum ActivityType: Int, Codable, CaseIterable {
     case playing = 0
     case streaming = 1
     case listening = 2
@@ -9,7 +9,7 @@ enum ActivityType: Int, Codable, CaseIterable {
     case custom = 4
     case competing = 5
     
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .playing: return "Playing"
         case .streaming: return "Streaming"
@@ -22,12 +22,12 @@ enum ActivityType: Int, Codable, CaseIterable {
 }
 
 /// Timestamp configuration
-enum TimestampMode: String, Codable, CaseIterable {
+public enum TimestampMode: String, Codable, CaseIterable {
     case none = "None"
     case sinceStart = "Since App Start"
     case custom = "Custom"
     
-    var displayName: String { rawValue }
+    public var displayName: String { rawValue }
 }
 
 /// Rich Presence Assets

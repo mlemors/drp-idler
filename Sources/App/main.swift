@@ -1,0 +1,3 @@
+import DiscordRPCIdlerLib
+
+DiscordRPCIdlerApp.main()

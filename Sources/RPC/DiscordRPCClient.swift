@@ -2,9 +2,9 @@ import Foundation
 
 /// Discord RPC Client - Main connection manager
 @MainActor
-class DiscordRPCClient: ObservableObject {
-    @Published var isConnected = false
-    @Published var currentUser: String?
+public class DiscordRPCClient: ObservableObject {
+    @Published public var isConnected = false
+    @Published public var currentUser: String?
     
     private var fileHandle: FileHandle?
     private var connectionTask: Task<Void, Never>?
@@ -15,10 +15,12 @@ class DiscordRPCClient: ObservableObject {
     private let maxPipes = 10
     private let reconnectInterval: TimeInterval = 5.0
     
+    public init() {}
+    
     // MARK: - Public Methods
     
     /// Start the connection loop that continuously tries to connect
-    func startConnectionLoop() async {
+    public func startConnectionLoop() async {
         connectionTask = Task {
             while !Task.isCancelled {
                 if !isConnected {
@@ -202,7 +204,7 @@ class DiscordRPCClient: ObservableObject {
     }
     
     /// Update client ID
-    func updateClientId(_ newClientId: String) {
+    public func updateClientId(_ newClientId: String) {
         if clientId != newClientId {
             clientId = newClientId
             Task {
@@ -213,13 +215,13 @@ class DiscordRPCClient: ObservableObject {
     }
     
     /// Reconnect to Discord
-    func reconnect() async {
+    public func reconnect() async {
         await disconnect()
         await attemptConnection()
     }
     
     /// Disconnect from Discord
-    func disconnect() async {
+    public func disconnect() async {
         connectionTask?.cancel()
         connectionTask = nil
         
