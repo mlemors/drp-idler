@@ -3,7 +3,8 @@ import Sparkle
 
 struct UpdatesTab: View {
     @EnvironmentObject var settings: SettingsManager
-    private let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    // Disable auto-start during development
+    private let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
     
     let frequencies = ["Daily", "Weekly", "Monthly"]
     
