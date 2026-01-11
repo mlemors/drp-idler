@@ -317,7 +317,8 @@ struct ApplicationTab: View {
                         .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                 )
                 
-                Text("Updates live
+                Text("Updates live as you type")
+                    .font(.caption)
                     .foregroundColor(.secondary)
                 
                 Spacer()

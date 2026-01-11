@@ -36,6 +36,7 @@ extension Defaults.Keys {
     // Update settings
     static let autoCheckUpdates = Key<Bool>("autoCheckUpdates", default: true)
     static let updateFrequency = Key<String>("updateFrequency", default: "Daily")
+    static let autoDownloadUpdates = Key<Bool>("autoDownloadUpdates", default: true)
 }
 
 /// Settings Manager - provides convenient access to all settings
@@ -125,6 +126,10 @@ class SettingsManager: ObservableObject {
     
     @Published var updateFrequency: String = Defaults[.updateFrequency] {
         didSet { Defaults[.updateFrequency] = updateFrequency }
+    }
+    
+    @Published var autoDownloadUpdates: Bool = Defaults[.autoDownloadUpdates] {
+        didSet { Defaults[.autoDownloadUpdates] = autoDownloadUpdates }
     }
     
     private init() {}

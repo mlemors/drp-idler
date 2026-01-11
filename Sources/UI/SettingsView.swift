@@ -21,7 +21,6 @@ struct SettingsView: View {
                     Label("Updates", systemImage: "arrow.triangle.2.circlepath.circle")
                 }
         }
-        .frame(width: 900, height: 600)
         .environmentObject(settings)
     }
 }
