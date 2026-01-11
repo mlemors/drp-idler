@@ -4,24 +4,30 @@ import Defaults
 extension Defaults.Keys {
     // Application settings
     static let clientId = Key<String>("clientId", default: "")
+    static let appName = Key<String>("appName", default: "")
     static let activityType = Key<Int>("activityType", default: 0) // Playing
     
     // Details & State
     static let details = Key<String>("details", default: "")
+    static let detailsURL = Key<String>("detailsURL", default: "")
     static let state = Key<String>("state", default: "")
+    static let stateURL = Key<String>("stateURL", default: "")
+    static let streamURL = Key<String>("streamURL", default: "")
     
     // Assets
     static let largeImageKey = Key<String>("largeImageKey", default: "")
     static let largeImageText = Key<String>("largeImageText", default: "")
+    static let largeImageURL = Key<String>("largeImageURL", default: "")
     static let smallImageKey = Key<String>("smallImageKey", default: "")
     static let smallImageText = Key<String>("smallImageText", default: "")
+    static let smallImageURL = Key<String>("smallImageURL", default: "")
     static let largeImageData = Key<Data?>("largeImageData", default: nil)
     static let smallImageData = Key<Data?>("smallImageData", default: nil)
     
     // Buttons
-    static let button1Label = Key<String>("button1Label", default: "")
+    static let button1Text = Key<String>("button1Text", default: "")
     static let button1URL = Key<String>("button1URL", default: "")
-    static let button2Label = Key<String>("button2Label", default: "")
+    static let button2Text = Key<String>("button2Text", default: "")
     static let button2URL = Key<String>("button2URL", default: "")
     
     // Party
@@ -31,6 +37,7 @@ extension Defaults.Keys {
     // Timestamps
     static let timestampMode = Key<String>("timestampMode", default: TimestampMode.sinceStart.rawValue)
     static let customTimestamp = Key<Date?>("customTimestamp", default: nil)
+    static let customEndTimestamp = Key<Date?>("customEndTimestamp", default: nil)
     
     // Menu Bar settings
     static let launchAtLogin = Key<Bool>("launchAtLogin", default: false)
@@ -51,6 +58,10 @@ class SettingsManager: ObservableObject {
         didSet { Defaults[.clientId] = clientId }
     }
     
+    @Published var appName: String = Defaults[.appName] {
+        didSet { Defaults[.appName] = appName }
+    }
+    
     @Published var activityType: ActivityType = ActivityType(rawValue: Defaults[.activityType]) ?? .playing {
         didSet { Defaults[.activityType] = activityType.rawValue }
     }
@@ -60,8 +71,20 @@ class SettingsManager: ObservableObject {
         didSet { Defaults[.details] = details }
     }
     
+    @Published var detailsURL: String = Defaults[.detailsURL] {
+        didSet { Defaults[.detailsURL] = detailsURL }
+    }
+    
     @Published var state: String = Defaults[.state] {
         didSet { Defaults[.state] = state }
+    }
+    
+    @Published var stateURL: String = Defaults[.stateURL] {
+        didSet { Defaults[.stateURL] = stateURL }
+    }
+    
+    @Published var streamURL: String = Defaults[.streamURL] {
+        didSet { Defaults[.streamURL] = streamURL }
     }
     
     // Assets
@@ -73,12 +96,20 @@ class SettingsManager: ObservableObject {
         didSet { Defaults[.largeImageText] = largeImageText }
     }
     
+    @Published var largeImageURL: String = Defaults[.largeImageURL] {
+        didSet { Defaults[.largeImageURL] = largeImageURL }
+    }
+    
     @Published var smallImageKey: String = Defaults[.smallImageKey] {
         didSet { Defaults[.smallImageKey] = smallImageKey }
     }
     
     @Published var smallImageText: String = Defaults[.smallImageText] {
         didSet { Defaults[.smallImageText] = smallImageText }
+    }
+    
+    @Published var smallImageURL: String = Defaults[.smallImageURL] {
+        didSet { Defaults[.smallImageURL] = smallImageURL }
     }
     
     @Published var largeImageData: Data? = Defaults[.largeImageData] {
@@ -90,16 +121,16 @@ class SettingsManager: ObservableObject {
     }
     
     // Buttons
-    @Published var button1Label: String = Defaults[.button1Label] {
-        didSet { Defaults[.button1Label] = button1Label }
+    @Published var button1Text: String = Defaults[.button1Text] {
+        didSet { Defaults[.button1Text] = button1Text }
     }
     
     @Published var button1URL: String = Defaults[.button1URL] {
         didSet { Defaults[.button1URL] = button1URL }
     }
     
-    @Published var button2Label: String = Defaults[.button2Label] {
-        didSet { Defaults[.button2Label] = button2Label }
+    @Published var button2Text: String = Defaults[.button2Text] {
+        didSet { Defaults[.button2Text] = button2Text }
     }
     
     @Published var button2URL: String = Defaults[.button2URL] {
@@ -124,6 +155,10 @@ class SettingsManager: ObservableObject {
         didSet { Defaults[.customTimestamp] = customTimestamp }
     }
     
+    @Published var customEndTimestamp: Date? = Defaults[.customEndTimestamp] {
+        didSet { Defaults[.customEndTimestamp] = customEndTimestamp }
+    }
+    
     // Menu Bar
     @Published var launchAtLogin: Bool = Defaults[.launchAtLogin] {
         didSet { Defaults[.launchAtLogin] = launchAtLogin }
@@ -142,7 +177,14 @@ class SettingsManager: ObservableObject {
         didSet { Defaults[.autoDownloadUpdates] = autoDownloadUpdates }
     }
     
-    private init() {}
+    private init() {
+        // Load Client ID from environment if available (for testing)
+        if clientId.isEmpty {
+            if let envClientId = ProcessInfo.processInfo.environment["DISCORD_CLIENT_ID"], !envClientId.isEmpty {
+                clientId = envClientId
+            }
+        }
+    }
     
     /// Build RichPresence from current settings
     func buildRichPresence(rpcClient: DiscordRPCClient) -> RichPresence {
@@ -157,18 +199,18 @@ class SettingsManager: ObservableObject {
         }
         
         var buttons: [RPCButton]? = nil
-        if !button1Label.isEmpty && !button1URL.isEmpty {
-            buttons = [RPCButton(label: button1Label, url: button1URL)]
-            if !button2Label.isEmpty && !button2URL.isEmpty {
-                buttons?.append(RPCButton(label: button2Label, url: button2URL))
+        if !button1Text.isEmpty && !button1URL.isEmpty {
+            buttons = [RPCButton(label: button1Text, url: button1URL)]
+            if !button2Text.isEmpty && !button2URL.isEmpty {
+                buttons?.append(RPCButton(label: button2Text, url: button2URL))
             }
-        } else if !button2Label.isEmpty && !button2URL.isEmpty {
-            buttons = [RPCButton(label: button2Label, url: button2URL)]
+        } else if !button2Text.isEmpty && !button2URL.isEmpty {
+            buttons = [RPCButton(label: button2Text, url: button2URL)]
         }
         
         var party: RPCParty? = nil
         if partySize > 0 && partyMax > 0 {
-            party = RPCParty(id: "drp-idler", size: [partySize, partyMax])
+            party = RPCParty(id: "discordrpc-idler", size: [partySize, partyMax])
         }
         
         let timestamps = rpcClient.getTimestamp(mode: timestampMode, customTimestamp: customTimestamp)
@@ -186,20 +228,27 @@ class SettingsManager: ObservableObject {
     /// Reset all settings to default
     func resetToDefaults() {
         clientId = ""
+        appName = ""
         activityType = .playing
         details = ""
+        detailsURL = ""
         state = ""
+        stateURL = ""
+        streamURL = ""
         largeImageKey = ""
         largeImageText = ""
+        largeImageURL = ""
         smallImageKey = ""
         smallImageText = ""
-        button1Label = ""
+        smallImageURL = ""
+        button1Text = ""
         button1URL = ""
-        button2Label = ""
+        button2Text = ""
         button2URL = ""
         partySize = 0
         partyMax = 0
         timestampMode = .sinceStart
         customTimestamp = nil
+        customEndTimestamp = nil
     }
 }

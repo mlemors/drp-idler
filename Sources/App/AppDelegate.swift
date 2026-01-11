@@ -37,14 +37,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         if let button = statusItem.button {
             // Use SF Symbol for now (we'll create custom icon later)
-            button.image = NSImage(systemSymbolName: "gamecontroller.fill", accessibilityDescription: "drp-idler")
+            button.image = NSImage(systemSymbolName: "gamecontroller.fill", accessibilityDescription: "DiscordRPC-Idler")
         }
         
         let menu = NSMenu()
         
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "About drp-idler", action: #selector(showAbout), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "About DiscordRPC-Idler", action: #selector(showAbout), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
@@ -59,7 +59,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let hostingController = NSHostingController(rootView: settingsView)
             
             settingsWindow = NSWindow(contentViewController: hostingController)
-            settingsWindow?.title = "drp-idler Settings"
+            settingsWindow?.title = "DiscordRPC-Idler Settings"
             settingsWindow?.styleMask = [.titled, .closable, .miniaturizable]
             // Don't set initial size here - let SettingsView handle it dynamically
             settingsWindow?.isReleasedWhenClosed = false
@@ -78,7 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc private func showAbout() {
         let alert = NSAlert()
-        alert.messageText = "drp-idler"
+        alert.messageText = "DiscordRPC-Idler"
         alert.informativeText = "Version 1.0.0\n\nA native macOS menu bar app for Discord Rich Presence.\n\n© 2026"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")

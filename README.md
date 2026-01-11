@@ -1,4 +1,4 @@
-# drp-idler
+# DiscordRPC-Idler
 
 A native macOS menu bar application for managing Discord Rich Presence (RPC).
 

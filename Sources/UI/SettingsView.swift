@@ -49,7 +49,7 @@ struct SettingsView: View {
         .environmentObject(settings)
         .onAppear {
             // Find our settings window immediately
-            if let window = NSApplication.shared.windows.first(where: { $0.title == "drp-idler Settings" }) {
+            if let window = NSApplication.shared.windows.first(where: { $0.title == "DiscordRPC-Idler Settings" }) {
                 settingsWindow = window
                 // Set initial size based on current tab
                 resizeWindow(to: selectedTab.windowSize, animated: false)

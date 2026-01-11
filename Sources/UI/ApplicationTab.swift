@@ -12,12 +12,301 @@ struct ApplicationTab: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Preview Card
-                VStack(spacing: 12) {
-                    Text("Discord Activity Preview")
-                        .font(.headline)
+            VStack(spacing: 16) {
+                // Activity Type
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Activity Type")
+                        .font(.system(size: 13, weight: .medium))
                     
+                    Picker("", selection: $settings.activityType) {
+                        ForEach(ActivityType.allCases, id: \.self) { type in
+                            Text(type.displayName).tag(type)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+                
+                // Application ID & Name (Pair)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Application ID")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("Enter application ID", text: $settings.clientId)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Application Name")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("Enter application name", text: $settings.appName)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                // Details & Details URL (Pair)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Details (line 1)")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("What you're doing", text: $settings.details)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Details URL")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("https://...", text: $settings.detailsURL)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                // State & State URL (Pair)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("State (line 2)")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("Additional info", text: $settings.state)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("State URL")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("https://...", text: $settings.stateURL)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                // Stream Link (Single) - only for Streaming type
+                if settings.activityType == .streaming {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Stream Link (Twitch or YouTube)")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("https://twitch.tv/... or https://youtube.com/...", text: $settings.streamURL)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                // Party Size & Max (Pair) - only for Playing type
+                if settings.activityType == .playing {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Party Size")
+                                .font(.system(size: 13, weight: .medium))
+                            TextField("0", text: Binding(
+                                get: { settings.partySize > 0 ? "\(settings.partySize)" : "" },
+                                set: { settings.partySize = Int($0) ?? 0 }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Maximum Party Size")
+                                .font(.system(size: 13, weight: .medium))
+                            TextField("0", text: Binding(
+                                get: { settings.partyMax > 0 ? "\(settings.partyMax)" : "" },
+                                set: { settings.partyMax = Int($0) ?? 0 }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                        }
+                    }
+                }
+                
+                Divider()
+                
+                // Large Image & Tooltip (Pair)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Large Image URL/Key")
+                            .font(.system(size: 13, weight: .medium))
+                        
+                        HStack {
+                            Button(action: { showingLargeImagePicker = true }) {
+                                HStack {
+                                    if let imageData = settings.largeImageData,
+                                       let nsImage = NSImage(data: imageData) {
+                                        Image(nsImage: nsImage)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 24, height: 24)
+                                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                                    } else {
+                                        Image(systemName: "photo.badge.plus")
+                                            .frame(width: 24, height: 24)
+                                    }
+                                    Text(settings.largeImageData != nil ? "Change Image" : "Upload Image")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .fileImporter(
+                                isPresented: $showingLargeImagePicker,
+                                allowedContentTypes: [.png, .jpeg, .gif],
+                                allowsMultipleSelection: false
+                            ) { result in
+                                handleImageSelection(result: result, isLarge: true)
+                            }
+                            .onDrop(of: [.image], isTargeted: nil) { providers in
+                                _ = handleDrop(providers: providers, isLarge: true)
+                                return true
+                            }
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Large Image Text")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("Hover text for large image", text: $settings.largeImageText)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                // Large Image URL (Single)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Large Image clickable URL")
+                        .font(.system(size: 13, weight: .medium))
+                    TextField("https://...", text: $settings.largeImageURL)
+                        .textFieldStyle(.roundedBorder)
+                }
+                
+                // Small Image & Tooltip (Pair)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Small Image URL/Key")
+                            .font(.system(size: 13, weight: .medium))
+                        
+                        HStack {
+                            Button(action: { showingSmallImagePicker = true }) {
+                                HStack {
+                                    if let imageData = settings.smallImageData,
+                                       let nsImage = NSImage(data: imageData) {
+                                        Image(nsImage: nsImage)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 24, height: 24)
+                                            .clipShape(Circle())
+                                    } else {
+                                        Image(systemName: "photo.badge.plus")
+                                            .frame(width: 24, height: 24)
+                                    }
+                                    Text(settings.smallImageData != nil ? "Change Image" : "Upload Image")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .fileImporter(
+                                isPresented: $showingSmallImagePicker,
+                                allowedContentTypes: [.png, .jpeg, .gif],
+                                allowsMultipleSelection: false
+                            ) { result in
+                                handleImageSelection(result: result, isLarge: false)
+                            }
+                            .onDrop(of: [.image], isTargeted: nil) { providers in
+                                _ = handleDrop(providers: providers, isLarge: false)
+                                return true
+                            }
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Small Image Text")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("Hover text for small image", text: $settings.smallImageText)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                // Small Image URL (Single)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Small Image clickable URL")
+                        .font(.system(size: 13, weight: .medium))
+                    TextField("https://...", text: $settings.smallImageURL)
+                        .textFieldStyle(.roundedBorder)
+                }
+                
+                Divider()
+                
+                // Button 1 Text & URL (Pair)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Button1 Text")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("Button label", text: $settings.button1Text)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Button1 URL")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("https://...", text: $settings.button1URL)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                // Button 2 Text & URL (Pair)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Button2 Text")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("Button label", text: $settings.button2Text)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Button2 URL")
+                            .font(.system(size: 13, weight: .medium))
+                        TextField("https://...", text: $settings.button2URL)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+                
+                Divider()
+                
+                // Timestamp Mode
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Timestamp Mode")
+                        .font(.system(size: 13, weight: .medium))
+                    
+                    Picker("", selection: $settings.timestampMode) {
+                        ForEach(TimestampMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                }
+                
+                // Custom Timestamps (Pair) - only for custom mode
+                if settings.timestampMode == .custom {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Start Timestamp")
+                                .font(.system(size: 13, weight: .medium))
+                            DatePicker("", selection: Binding(
+                                get: { settings.customTimestamp ?? Date() },
+                                set: { settings.customTimestamp = $0 }
+                            ), displayedComponents: [.date, .hourAndMinute])
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("End Timestamp")
+                                .font(.system(size: 13, weight: .medium))
+                            DatePicker("", selection: Binding(
+                                get: { settings.customEndTimestamp ?? Date() },
+                                set: { settings.customEndTimestamp = $0 }
+                            ), displayedComponents: [.date, .hourAndMinute])
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                        }
+                    }
+                }
+                
+                Divider()
+                    .padding(.vertical, 8)
+                
+                // Preview at the bottom
+                VStack(spacing: 12) {
                     // Discord Message Card Preview
                     VStack(alignment: .leading, spacing: 0) {
                         // User Header
@@ -52,85 +341,30 @@ struct ApplicationTab: View {
                         
                         // Activity Content
                         HStack(alignment: .top, spacing: 8) {
-                            // Large Image - Clickable
+                            // Large Image with Small Image overlay
                             ZStack(alignment: .bottomTrailing) {
-                                Button(action: { showingLargeImagePicker = true }) {
-                                    ZStack {
-                                        if let imageData = settings.largeImageData,
-                                           let nsImage = NSImage(data: imageData) {
-                                            Image(nsImage: nsImage)
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 60, height: 60)
-                                                .clipShape(RoundedRectangle(cornerRadius: 6))
-                                        } else {
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .fill(Color.gray.opacity(0.15))
-                                                .frame(width: 60, height: 60)
-                                                .overlay(
-                                                    VStack(spacing: 2) {
-                                                        Image(systemName: "photo.badge.plus")
-                                                            .font(.system(size: 16))
-                                                            .foregroundColor(.gray)
-                                                        Text("Click")
-                                                            .font(.system(size: 7))
-                                                            .foregroundColor(.gray)
-                                                    }
-                                                )
-                                        }
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                                .help("Click to upload large image")
-                                .fileImporter(
-                                    isPresented: $showingLargeImagePicker,
-                                    allowedContentTypes: [.png, .jpeg, .gif],
-                                    allowsMultipleSelection: false
-                                ) { result in
-                                    handleImageSelection(result: result, isLarge: true)
-                                }
-                                .onDrop(of: [.image], isTargeted: nil) { providers in
-                                    _ = handleDrop(providers: providers, isLarge: true)
-                                    return true
+                                if let imageData = settings.largeImageData,
+                                   let nsImage = NSImage(data: imageData) {
+                                    Image(nsImage: nsImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                } else {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(Color.gray.opacity(0.15))
+                                        .frame(width: 60, height: 60)
                                 }
                                 
-                                // Small Image - Clickable overlay
-                                if settings.largeImageData != nil {
-                                    Button(action: { showingSmallImagePicker = true }) {
-                                        ZStack {
-                                            if let imageData = settings.smallImageData,
-                                               let nsImage = NSImage(data: imageData) {
-                                                Image(nsImage: nsImage)
-                                                    .resizable()
-                                                    .aspectRatio(contentMode: .fill)
-                                                    .frame(width: 18, height: 18)
-                                                    .clipShape(Circle())
-                                            } else {
-                                                Circle()
-                                                    .fill(Color.gray.opacity(0.2))
-                                                    .frame(width: 18, height: 18)
-                                                    .overlay(
-                                                        Image(systemName: "plus.circle.fill")
-                                                            .font(.system(size: 10))
-                                                            .foregroundColor(.gray)
-                                                    )
-                                            }
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                    .help("Click to upload small image")
-                                    .fileImporter(
-                                        isPresented: $showingSmallImagePicker,
-                                        allowedContentTypes: [.png, .jpeg, .gif],
-                                        allowsMultipleSelection: false
-                                    ) { result in
-                                        handleImageSelection(result: result, isLarge: false)
-                                    }
-                                    .onDrop(of: [.image], isTargeted: nil) { providers in
-                                        _ = handleDrop(providers: providers, isLarge: false)
-                                        return true
-                                    }
-                                    .offset(x: 4, y: 4)
+                                // Small Image overlay
+                                if let imageData = settings.smallImageData,
+                                   let nsImage = NSImage(data: imageData) {
+                                    Image(nsImage: nsImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 18, height: 18)
+                                        .clipShape(Circle())
+                                        .offset(x: 4, y: 4)
                                 }
                             }
                             
@@ -171,143 +405,22 @@ struct ApplicationTab: View {
                         .padding(.horizontal, 10)
                         .padding(.bottom, 10)
                     }
-                    .frame(width: 400, height: 160)
+                    .frame(maxWidth: 400)
                     .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
-                    
-                    Text("Updates live as you type")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
-                .padding()
-                .background(Color(NSColor.controlBackgroundColor).opacity(0.3))
-                .cornerRadius(8)
                 .onAppear {
                     startTimer()
                 }
                 .onDisappear {
                     stopTimer()
                 }
-                
-                // Configuration Section
-                
-                // Activity Type
-                GroupBox {
-                    Picker("", selection: $settings.activityType) {
-                        ForEach(ActivityType.allCases, id: \.self) { type in
-                            Text(type.displayName).tag(type)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                } label: {
-                    Text("Activity Type")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                }
-                
-                // Details & State
-                GroupBox {
-                    VStack(spacing: 8) {
-                        TextField("What you're doing", text: $settings.details)
-                            .textFieldStyle(.roundedBorder)
-                        TextField("Additional info", text: $settings.state)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                } label: {
-                    Text("Details & State")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                }
-                
-                // Party & Timestamps
-                HStack(spacing: 12) {
-                    GroupBox {
-                        HStack(spacing: 8) {
-                            TextField("Size", text: Binding(
-                                get: { settings.partySize > 0 ? "\(settings.partySize)" : "" },
-                                set: { settings.partySize = Int($0) ?? 0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 50)
-                            
-                            Text("/")
-                            
-                            TextField("Max", text: Binding(
-                                get: { settings.partyMax > 0 ? "\(settings.partyMax)" : "" },
-                                set: { settings.partyMax = Int($0) ?? 0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 50)
-                            
-                            if settings.partySize > 0 || settings.partyMax > 0 {
-                                Button(action: {
-                                    settings.partySize = 0
-                                    settings.partyMax = 0
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Clear party")
-                            }
-                        }
-                    } label: {
-                        Text("Party")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    GroupBox {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Picker("", selection: $settings.timestampMode) {
-                                ForEach(TimestampMode.allCases, id: \.self) { mode in
-                                    Text(mode.displayName).tag(mode)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .labelsHidden()
-                            
-                            if settings.timestampMode == .custom {
-                                DatePicker("", selection: Binding(
-                                    get: { settings.customTimestamp ?? Date() },
-                                    set: { settings.customTimestamp = $0 }
-                                ), displayedComponents: [.date, .hourAndMinute])
-                                .datePickerStyle(.compact)
-                                .labelsHidden()
-                            }
-                        }
-                    } label: {
-                        Text("Timestamps")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                    }
-                }
-                
-                // Update Button
-                Button(action: updatePresence) {
-                    HStack {
-                        Image(systemName: "arrow.up.circle.fill")
-                        Text("Update Presence")
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(settings.clientId.isEmpty)
-                .controlSize(.large)
             }
             .padding()
-        }
-    }
-    
-    private func updatePresence() {
-        let presence = settings.buildRichPresence(rpcClient: rpcClient)
-        Task {
-            await rpcClient.setActivity(presence, activityType: settings.activityType)
         }
     }
     
@@ -382,9 +495,6 @@ struct ApplicationTab: View {
         // TODO: Upload image to Discord CDN or image hosting service
         // For now, just store locally
         print("Image uploaded: \(isLarge ? "large" : "small"), size: \(data.count) bytes")
-        
-        // Update presence
-        updatePresence()
     }
 }
 
@@ -393,6 +503,6 @@ struct ApplicationTab_Previews: PreviewProvider {
         ApplicationTab()
             .environmentObject(DiscordRPCClient())
             .environmentObject(SettingsManager.shared)
-            .frame(width: 600, height: 650)
+            .frame(width: 600, height: 800)
     }
 }

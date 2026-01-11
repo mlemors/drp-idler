@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "drp-idler",
+    name: "DiscordRPC-Idler",
     platforms: [
         .macOS(.v13)
     ],
     products: [
         .executable(
-            name: "drp-idler",
-            targets: ["drpIdler"]
+            name: "DiscordRPC-Idler",
+            targets: ["DiscordRPCIdler"]
         )
     ],
     dependencies: [
@@ -19,7 +19,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "drpIdler",
+            name: "DiscordRPCIdler",
             dependencies: [
                 .product(name: "Sparkle", package: "Sparkle"),
                 .product(name: "Defaults", package: "Defaults"),

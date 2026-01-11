@@ -31,7 +31,20 @@ class DiscordRPCClient: ObservableObject {
     
     /// Attempt to connect to Discord
     private func attemptConnection() async {
-        // Try all pipes from 0-9
+        // On macOS, Discord uses different paths
+        // Try environment variable paths first
+        if let xdgRuntime = ProcessInfo.processInfo.environment["XDG_RUNTIME_DIR"] {
+            for pipe in 0..<maxPipes {
+                let pipePath = "\(xdgRuntime)/discord-ipc-\(pipe)"
+                if FileManager.default.fileExists(atPath: pipePath) {
+                    if await connect(to: pipePath) {
+                        return
+                    }
+                }
+            }
+        }
+        
+        // Try /tmp paths (Linux/some macOS setups)
         for pipe in 0..<maxPipes {
             let pipePath = "/tmp/discord-ipc-\(pipe)"
             
@@ -41,6 +54,19 @@ class DiscordRPCClient: ObservableObject {
                 }
             }
         }
+        
+        // Try ~/Library/Application Support/discord paths (macOS)
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
+        for pipe in 0..<maxPipes {
+            let pipePath = "\(homeDir)/Library/Application Support/discord/discord-ipc-\(pipe)"
+            if FileManager.default.fileExists(atPath: pipePath) {
+                if await connect(to: pipePath) {
+                    return
+                }
+            }
+        }
+        
+        print("[RPC] No Discord IPC pipes found. Is Discord running?")
     }
     
     /// Connect to a specific pipe
@@ -137,7 +163,7 @@ class DiscordRPCClient: ObservableObject {
         
         if let party = activity.party, let size = party.size, size.count == 2 {
             activityDict["party"] = [
-                "id": party.id ?? "drp-idler",
+                "id": party.id ?? "discordrpc-idler",
                 "size": size
             ]
         }

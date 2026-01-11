@@ -40,7 +40,7 @@ struct SettingsTab: View {
                                 LaunchAtLogin.isEnabled = newValue
                             }
                         
-                        Text("Start drp-idler automatically when you log in to your Mac")
+                        Text("Start DiscordRPC-Idler automatically when you log in to your Mac")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
