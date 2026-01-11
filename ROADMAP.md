@@ -1,53 +1,56 @@
-# Discord RPC Idler - Development Roadmap
+# drp-idler - Development Roadmap
 
-## ✅ Completed (MVP - Version 1.0)
+## ✅ Completed (Version 1.0)
 
 ### Core Features
 - [x] Native Swift/SwiftUI macOS menu bar application
 - [x] Discord RPC protocol implementation (Unix domain sockets)
 - [x] Auto-reconnect to Discord (5-second interval, pipes 0-9)
 - [x] Settings persistence with Defaults library
-- [x] 4-tab settings UI:
-  - Application: Client ID, activity type, details/state, images, buttons, party, timestamps
-  - Preview: Live Discord message card mockup
-  - Menu Bar: Launch at login
+- [x] 3-tab settings UI:
+  - Application: Activity type, details/state, party, timestamps with live preview
+  - Settings: Client ID and launch at login
   - Updates: Sparkle auto-updater integration
+- [x] Live Discord message card preview with elapsed time counter
+- [x] Image upload via click or drag & drop
+- [x] Dynamic window resizing per tab
 - [x] Menu bar integration with NSStatusItem
 - [x] Launch at login support
 - [x] Sleep/wake auto-reconnect handling
+- [x] SwiftUI Previews for development
+- [x] Party size fields clearable
 
 ### Technical
 - [x] Swift Package Manager setup
 - [x] Dependencies: Sparkle 2.x, Defaults, LaunchAtLogin-Modern
 - [x] Info.plist with LSUIElement (menu bar only)
 - [x] Network client entitlements
-- [x] Git repository initialized
+- [x] Git repository initialized and pushed to GitHub
 - [x] MIT License
-- [x] README documentation
+- [x] Documentation (README, SETUP, ROADMAP)
 
-## 🚀 Next Steps (To be completed)
+## 🚀 Next Steps
 
-### 1. GitHub Push
-**Status:** Ready, needs authentication
-```bash
-cd /Users/mlemors/vcs/drp-idler
-git push -u origin main
-```
-**Issue:** Permission denied (403). Du musst entweder:
-- SSH-Key zu deinem GitHub Account hinzufügen, oder
-- Personal Access Token verwenden, oder
-- Remote URL auf SSH umstellen: `git remote set-url origin git@github.com:mlemors/drp-idler.git`
+### 1. Image Hosting Integration
+**Status:** Images stored locally, not uploaded to Discord
+**Todo:** 
+- Implement image upload to Discord CDN or external hosting (Imgur API)
+- Generate image URLs for RPC assets
+- Update presence with hosted image URLs
 
 ### 2. Custom Menu Bar Icon
-**Current:** Temporary SF Symbol (`gamecontroller.fill`)
+**Current:** SF Symbol (`gamecontroller.fill`)
 **Todo:** 
-- Design minimalistisches Discord-inspired Icon
-- Export als .png (16x16@1x, 32x32@2x, 64x64@3x)
-- Als Template Image markieren (monochrom für Dark/Light Mode)
-- In AppDelegate laden: `NSImage(named: "MenuBarIcon")`
+- Design minimalist Discord-inspired icon
+- Export as .png (16x16@1x, 32x32@2x)
+- Mark as template image for Dark/Light mode support
 
-### 3. RPC Protocol Verbesserungen
-**Current:** Grundlegende Handshake/SET_ACTIVITY Implementation
+### 3. RPC Response Reading
+**Current:** Only sending to Discord, not reading responses
+**Todo:**
+- Read FRAME responses from Discord
+- Validate connection status
+- Display errors in UI
 **Todo:**
 - Response reading von Discord implementieren (READY event parsing)
 - Error handling für falsche Client IDs
@@ -86,7 +89,7 @@ git push -u origin main
 **Todo:**
 - Apple Developer Account (notwendig für Distribution)
 - Code Signing Certificate erstellen
-- App signieren: `codesign --deep --force --sign "Developer ID" DiscordRPCIdler.app`
+- App signieren: `codesign --deep --force --sign "Developer ID" drp-idler.app`
 - Notarisierung bei Apple: `xcrun notarytool submit`
 - DMG oder .zip Distribution erstellen
 

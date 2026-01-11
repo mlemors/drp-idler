@@ -15,6 +15,8 @@ extension Defaults.Keys {
     static let largeImageText = Key<String>("largeImageText", default: "")
     static let smallImageKey = Key<String>("smallImageKey", default: "")
     static let smallImageText = Key<String>("smallImageText", default: "")
+    static let largeImageData = Key<Data?>("largeImageData", default: nil)
+    static let smallImageData = Key<Data?>("smallImageData", default: nil)
     
     // Buttons
     static let button1Label = Key<String>("button1Label", default: "")
@@ -77,6 +79,14 @@ class SettingsManager: ObservableObject {
     
     @Published var smallImageText: String = Defaults[.smallImageText] {
         didSet { Defaults[.smallImageText] = smallImageText }
+    }
+    
+    @Published var largeImageData: Data? = Defaults[.largeImageData] {
+        didSet { Defaults[.largeImageData] = largeImageData }
+    }
+    
+    @Published var smallImageData: Data? = Defaults[.smallImageData] {
+        didSet { Defaults[.smallImageData] = smallImageData }
     }
     
     // Buttons

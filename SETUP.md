@@ -1,4 +1,4 @@
-# Setup Guide - Discord RPC Idler
+# Setup Guide - drp-idler
 
 ## Quick Start
 
@@ -54,11 +54,11 @@ Für besseres Development Experience mit Xcode:
 ```bash
 cd /Users/mlemors/vcs/drp-idler
 swift package generate-xcodeproj
-open DiscordRPCIdler.xcodeproj
+open drp-idler.xcodeproj
 ```
 
 In Xcode:
-- Setze Scheme auf "DiscordRPCIdler"
+- Setze Scheme auf "drp-idler"
 - Wähle "My Mac" als Destination
 - Run (⌘R)
 
@@ -68,7 +68,7 @@ In Xcode:
 drp-idler/
 ├── Sources/
 │   ├── App/
-│   │   ├── DiscordRPCIdlerApp.swift  # SwiftUI App Entry Point
+│   │   ├── DRPIdlerApp.swift         # SwiftUI App Entry Point
 │   │   └── AppDelegate.swift          # Menu Bar Setup
 │   ├── RPC/
 │   │   ├── DiscordRPCClient.swift    # Discord RPC Engine
@@ -77,9 +77,8 @@ drp-idler/
 │   │   └── SettingsManager.swift     # Settings Persistence
 │   └── UI/
 │       ├── SettingsView.swift        # Main Settings Window
-│       ├── ApplicationTab.swift       # RPC Configuration
-│       ├── PreviewTab.swift          # Live Preview
-│       ├── MenuBarTab.swift          # Launch Settings
+│       ├── ApplicationTab.swift       # RPC Config + Live Preview
+│       ├── SettingsTab.swift         # Client ID + Launch at Login
 │       └── UpdatesTab.swift          # Update Settings
 ├── Resources/
 │   ├── Info.plist                     # App Configuration
@@ -121,7 +120,7 @@ ls -la /tmp/discord-ipc-*
 ### Console Logs anzeigen
 ```bash
 # While app is running
-log stream --predicate 'process == "DiscordRPCIdler"' --level debug
+log stream --predicate 'process == "drp-idler"' --level debug
 ```
 
 ## Nächste Schritte
@@ -136,7 +135,7 @@ Siehe [ROADMAP.md](ROADMAP.md) für:
 
 **"App kann nicht geöffnet werden" (Gatekeeper)**
 ```bash
-xattr -cr /path/to/DiscordRPCIdler.app
+xattr -cr /path/to/drp-idler.app
 ```
 
 **"Developer cannot be verified"**
@@ -155,7 +154,3 @@ swift build
 Bei Fragen oder Problemen:
 - GitHub Issues: https://github.com/mlemors/drp-idler/issues
 - Discord Developer Docs: https://discord.com/developers/docs
-
-## Credits
-
-Inspired by [Discord-CustomRP](https://github.com/maximmax42/Discord-CustomRP) by maximmax42

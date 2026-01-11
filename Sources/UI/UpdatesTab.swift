@@ -9,28 +9,27 @@ struct UpdatesTab: View {
     let frequencies = ["Daily", "Weekly", "Monthly"]
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 20) {
             Spacer()
             
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 // Check for Updates
-                HStack(spacing: 20) {
+                HStack(spacing: 12) {
                     Text("Check for Updates")
-                        .frame(width: 180, alignment: .trailing)
+                        .frame(width: 140, alignment: .trailing)
                     
                     Toggle("", isOn: $settings.autoCheckUpdates)
                         .labelsHidden()
                         .toggleStyle(.switch)
                     
                     Text("Enable")
-                    
-                    Spacer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
                 // Frequency
-                HStack(spacing: 20) {
+                HStack(spacing: 12) {
                     Text("Frequency")
-                        .frame(width: 180, alignment: .trailing)
+                        .frame(width: 140, alignment: .trailing)
                     
                     Picker("", selection: $settings.updateFrequency) {
                         ForEach(frequencies, id: \.self) { frequency in
@@ -38,16 +37,8 @@ struct UpdatesTab: View {
                         }
                     }
                     .pickerStyle(.menu)
-                    .frame(width: 150)
+                    .frame(width: 120, alignment: .leading)
                     .disabled(!settings.autoCheckUpdates)
-                    
-                    Spacer()
-                }
-                
-                // Check Now Button
-                HStack(spacing: 20) {
-                    Spacer()
-                        .frame(width: 180)
                     
                     Button("Check Now") {
                         updaterController.checkForUpdates(nil)
@@ -58,26 +49,33 @@ struct UpdatesTab: View {
                 }
                 
                 Divider()
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 8)
                 
                 // Options
-                HStack(spacing: 20) {
+                HStack(spacing: 12) {
                     Text("Options")
-                        .frame(width: 180, alignment: .trailing)
+                        .frame(width: 140, alignment: .trailing)
                     
                     Toggle("", isOn: $settings.autoDownloadUpdates)
                         .labelsHidden()
                         .toggleStyle(.switch)
                     
                     Text("Automatically download new updates")
-                    
-                    Spacer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .frame(maxWidth: 600)
+            .frame(maxWidth: 500)
             
             Spacer()
         }
         .padding()
+    }
+}
+
+struct UpdatesTab_Previews: PreviewProvider {
+    static var previews: some View {
+        UpdatesTab()
+            .environmentObject(SettingsManager.shared)
+            .frame(width: 500, height: 300)
     }
 }

@@ -1,10 +1,12 @@
-# Discord RPC Idler
+# drp-idler
 
 A native macOS menu bar application for managing Discord Rich Presence (RPC).
 
 ## Features
 
 - 🎮 Custom Discord Rich Presence configuration
+- 🖼️ Image upload via drag & drop or file picker
+- ⏱️ Live elapsed time display
 - 📱 Clean menu bar interface
 - 🔄 Automatic reconnection to Discord
 - 🌙 Dark mode support
@@ -15,10 +17,12 @@ A native macOS menu bar application for managing Discord Rich Presence (RPC).
 
 1. Create a Discord Application at https://discord.com/developers/applications
 2. Copy your Application ID
-3. Launch Discord RPC Idler
+3. Launch drp-idler
 4. Open Settings from the menu bar icon
-5. Paste your Client ID and configure your presence
-6. Click "Update Presence"
+5. Paste your Client ID in the Settings tab
+6. Configure your presence in the Application tab
+7. Upload images by clicking or dragging to the preview
+8. Click "Update Presence"
 
 ## Requirements
 
@@ -35,6 +39,9 @@ swift build
 
 # Run
 swift run
+
+# Open in Xcode with Previews
+open Package.swift
 ```
 
 ## License
