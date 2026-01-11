@@ -10,32 +10,6 @@ public struct SettingsTab: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading ,spacing: 20) {
-                // Client ID
-                GroupBox {
-                    VStack(alignment: .leading, spacing: 8) {
-                        TextField("Discord Application ID", text: $settings.clientId)
-                            .textFieldStyle(.roundedBorder)
-                            .onChange(of: settings.clientId) { newValue in
-                                rpcClient.updateClientId(newValue)
-                            }
-                        
-                        HStack(spacing: 4) {
-                            Text("Get ID from")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Link("discord.com/developers", destination: URL(string: "https://discord.com/developers/applications")!)
-                                .font(.caption)
-                        }
-                    }
-                } label: {
-                    Text("Client ID")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                }
-                
-                Divider()
-                    .padding(.vertical, 8)
-                
                 // Launch at Login
                 GroupBox {
                     VStack(alignment: .leading, spacing: 8) {

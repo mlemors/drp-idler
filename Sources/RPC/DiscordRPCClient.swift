@@ -37,12 +37,16 @@ public class DiscordRPCClient: ObservableObject {
         // On macOS, Discord uses different paths
         // Try macOS temp directory first (where Discord actually puts the socket on macOS)
         if let tempDir = ProcessInfo.processInfo.environment["TMPDIR"] {
+            print("[RPC] Checking TMPDIR: \(tempDir)")
             for pipe in 0..<maxPipes {
                 let pipePath = "\(tempDir)discord-ipc-\(pipe)"
+                print("[RPC] Trying \(pipePath), exists: \(FileManager.default.fileExists(atPath: pipePath))")
                 if FileManager.default.fileExists(atPath: pipePath) {
                     if await connect(to: pipePath) {
-                        print("[RPC] Connected to Discord")
+                        print("[RPC] Connected to Discord via \(pipePath)")
                         return
+                    } else {
+                        print("[RPC] Connection attempt to \(pipePath) failed")
                     }
                 }
             }
@@ -114,6 +118,8 @@ public class DiscordRPCClient: ObservableObject {
     
     /// Connect to a specific pipe
     private func connect(to pipePath: String) async -> Bool {
+        print("[RPC] Attempting to connect to \(pipePath)")
+        
         // Create Unix domain socket
         socketFd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard socketFd >= 0 else {
@@ -148,18 +154,26 @@ public class DiscordRPCClient: ObservableObject {
         }
         
         guard result == 0 else {
+            print("[RPC] Failed to connect: \(String(cString: strerror(errno)))")
             Darwin.close(socketFd)
             socketFd = -1
             return false
         }
+        
+        print("[RPC] Socket connected successfully")
         
         // Send handshake
         if await sendHandshake() {
             // Wait for ready response
             if await waitForReady() {
                 isConnected = true
+                print("[RPC] Handshake successful, connected!")
                 return true
+            } else {
+                print("[RPC] Handshake failed: didn't receive READY")
             }
+        } else {
+            print("[RPC] Failed to send handshake")
         }
         
         Darwin.close(socketFd)
@@ -313,6 +327,7 @@ public class DiscordRPCClient: ObservableObject {
     /// Send a payload to Discord
     private func sendPayload(opcode: RPCOpcode, data: [String: Any]) async -> Bool {
         guard socketFd >= 0 else {
+            print("[RPC] Cannot send payload: socket not connected")
             return false
         }
         
@@ -339,10 +354,16 @@ public class DiscordRPCClient: ObservableObject {
                 Darwin.write(socketFd, bufferPtr.baseAddress!, packet.count)
             }
             
-            return sent == packet.count
+            if sent != packet.count {
+                print("[RPC] Failed to send complete packet: sent \(sent) of \(packet.count) bytes")
+                return false
+            }
+            
+            print("[RPC] Successfully sent \(packet.count) bytes")
+            return true
             
         } catch {
-            print("[RPC] Failed to send payload: \(error)")
+            print("Failed to send payload: \(error)")
             return false
         }
     }

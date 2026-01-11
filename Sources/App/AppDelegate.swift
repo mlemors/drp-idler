@@ -11,16 +11,6 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize RPC client
         rpcClient = DiscordRPCClient()
         
-        // Load client ID from settings
-        let settings = SettingsManager.shared
-        
-        // Set default client ID if not set (from .env for development)
-        if settings.clientId.isEmpty {
-            settings.clientId = "1459892380864872583"
-        }
-        
-        rpcClient.updateClientId(settings.clientId)
-        
         // Configure as menu bar only app (no dock icon)
         NSApp.setActivationPolicy(.accessory)
         
