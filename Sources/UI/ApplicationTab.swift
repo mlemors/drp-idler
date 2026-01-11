@@ -175,9 +175,23 @@ public struct ApplicationTab: View {
                                     .foregroundColor(.secondary)
                             }
                         } else {
-                            Text("Create an application at discord.com/developers/applications")
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
+                            Button(action: {
+                                if let url = URL(string: "https://discord.com/developers/applications") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }) {
+                                Text("Create an application at discord.com/developers/applications")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.blue)
+                            }
+                            .buttonStyle(.plain)
+                            .onHover { hovering in
+                                if hovering {
+                                    NSCursor.pointingHand.push()
+                                } else {
+                                    NSCursor.pop()
+                                }
+                            }
                         }
                     }
                     
