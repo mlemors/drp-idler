@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 /// Discord RPC Client - Main connection manager
 @MainActor
@@ -6,7 +7,7 @@ public class DiscordRPCClient: ObservableObject {
     @Published public var isConnected = false
     @Published public var currentUser: String?
     
-    private var fileHandle: FileHandle?
+    private var socketFd: Int32 = -1
     private var connectionTask: Task<Void, Never>?
     private var reconnectTimer: Timer?
     private var clientId: String = ""
@@ -34,12 +35,50 @@ public class DiscordRPCClient: ObservableObject {
     /// Attempt to connect to Discord
     private func attemptConnection() async {
         // On macOS, Discord uses different paths
-        // Try environment variable paths first
+        // Try macOS temp directory first (where Discord actually puts the socket on macOS)
+        if let tempDir = ProcessInfo.processInfo.environment["TMPDIR"] {
+            for pipe in 0..<maxPipes {
+                let pipePath = "\(tempDir)discord-ipc-\(pipe)"
+                if FileManager.default.fileExists(atPath: pipePath) {
+                    if await connect(to: pipePath) {
+                        print("[RPC] Connected to Discord")
+                        return
+                    }
+                }
+            }
+        }
+        
+        // Try /var/folders temp directory (alternative macOS path)
+        let varFoldersPaths = [
+            "/var/folders/",
+        ]
+        
+        for basePath in varFoldersPaths {
+            if FileManager.default.fileExists(atPath: basePath) {
+                do {
+                    let contents = try FileManager.default.subpathsOfDirectory(atPath: basePath)
+                    for subpath in contents {
+                        if subpath.contains("discord-ipc-") {
+                            let fullPath = basePath + subpath
+                            if await connect(to: fullPath) {
+                                print("[RPC] Connected to Discord via \(fullPath)")
+                                return
+                            }
+                        }
+                    }
+                } catch {
+                    // Ignore permission errors
+                }
+            }
+        }
+        
+        // Try environment variable paths
         if let xdgRuntime = ProcessInfo.processInfo.environment["XDG_RUNTIME_DIR"] {
             for pipe in 0..<maxPipes {
                 let pipePath = "\(xdgRuntime)/discord-ipc-\(pipe)"
                 if FileManager.default.fileExists(atPath: pipePath) {
                     if await connect(to: pipePath) {
+                        print("[RPC] Connected to Discord via \(pipePath)")
                         return
                     }
                 }
@@ -52,6 +91,7 @@ public class DiscordRPCClient: ObservableObject {
             
             if FileManager.default.fileExists(atPath: pipePath) {
                 if await connect(to: pipePath) {
+                    print("[RPC] Connected to Discord via \(pipePath)")
                     return
                 }
             }
@@ -63,6 +103,7 @@ public class DiscordRPCClient: ObservableObject {
             let pipePath = "\(homeDir)/Library/Application Support/discord/discord-ipc-\(pipe)"
             if FileManager.default.fileExists(atPath: pipePath) {
                 if await connect(to: pipePath) {
+                    print("[RPC] Connected to Discord via \(pipePath)")
                     return
                 }
             }
@@ -73,9 +114,42 @@ public class DiscordRPCClient: ObservableObject {
     
     /// Connect to a specific pipe
     private func connect(to pipePath: String) async -> Bool {
-        fileHandle = FileHandle(forUpdatingAtPath: pipePath)
+        // Create Unix domain socket
+        socketFd = socket(AF_UNIX, SOCK_STREAM, 0)
+        guard socketFd >= 0 else {
+            print("[RPC] Failed to create socket: \(String(cString: strerror(errno)))")
+            return false
+        }
         
-        guard let handle = fileHandle else {
+        // Prepare sockaddr_un structure
+        var addr = sockaddr_un()
+        addr.sun_family = sa_family_t(AF_UNIX)
+        
+        // Copy path to sun_path
+        let pathCString = pipePath.utf8CString
+        guard pathCString.count <= MemoryLayout.size(ofValue: addr.sun_path) else {
+            print("[RPC] Path too long")
+            Darwin.close(socketFd)
+            socketFd = -1
+            return false
+        }
+        
+        withUnsafeMutableBytes(of: &addr.sun_path) { ptr in
+            pathCString.withUnsafeBytes { pathBytes in
+                ptr.copyBytes(from: pathBytes)
+            }
+        }
+        
+        // Connect to socket
+        let result = withUnsafePointer(to: &addr) { addrPtr in
+            addrPtr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPtr in
+                Darwin.connect(socketFd, sockaddrPtr, socklen_t(MemoryLayout<sockaddr_un>.size))
+            }
+        }
+        
+        guard result == 0 else {
+            Darwin.close(socketFd)
+            socketFd = -1
             return false
         }
         
@@ -88,8 +162,8 @@ public class DiscordRPCClient: ObservableObject {
             }
         }
         
-        handle.closeFile()
-        fileHandle = nil
+        Darwin.close(socketFd)
+        socketFd = -1
         return false
     }
     
@@ -225,8 +299,10 @@ public class DiscordRPCClient: ObservableObject {
         connectionTask?.cancel()
         connectionTask = nil
         
-        fileHandle?.closeFile()
-        fileHandle = nil
+        if socketFd >= 0 {
+            Darwin.close(socketFd)
+            socketFd = -1
+        }
         
         isConnected = false
         currentUser = nil
@@ -236,7 +312,9 @@ public class DiscordRPCClient: ObservableObject {
     
     /// Send a payload to Discord
     private func sendPayload(opcode: RPCOpcode, data: [String: Any]) async -> Bool {
-        guard let handle = fileHandle else { return false }
+        guard socketFd >= 0 else {
+            return false
+        }
         
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: data)
@@ -256,11 +334,15 @@ public class DiscordRPCClient: ObservableObject {
             // Payload
             packet.append(jsonData)
             
-            try handle.write(contentsOf: packet)
-            return true
+            // Send data
+            let sent = packet.withUnsafeBytes { bufferPtr -> Int in
+                Darwin.write(socketFd, bufferPtr.baseAddress!, packet.count)
+            }
+            
+            return sent == packet.count
             
         } catch {
-            print("Failed to send payload: \(error)")
+            print("[RPC] Failed to send payload: \(error)")
             return false
         }
     }
