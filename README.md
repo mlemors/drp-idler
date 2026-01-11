@@ -9,7 +9,7 @@ A native macOS menu bar application for managing Discord Rich Presence (RPC).
 - 📱 Clean menu bar interface with activity toggle
 - 🔌 Automatic reconnection to Discord
 - 🌙 Dark mode support
-- ⚡️ Automatic updates via Sparkle
+
 - 🚀 Launch at login support
 - 🖼️ Automatic app icon loading from Discord API
 
@@ -70,6 +70,5 @@ MIT License - see LICENSE file for details
 ## Credits
 
 Built with Swift and SwiftUI using:
-- [Sparkle](https://sparkle-project.org/) for automatic updates
 - [Defaults](https://github.com/sindresorhus/Defaults) for settings persistence
 - [LaunchAtLogin](https://github.com/sindresorhus/LaunchAtLogin-Modern) for launch at login support

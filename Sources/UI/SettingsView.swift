@@ -3,15 +3,12 @@ import SwiftUI
 public enum AppTab: Int {
     case application = 0
     case settings = 1
-    case updates = 2
     
     var windowSize: CGSize {
         switch self {
         case .application:
             return CGSize(width: 600, height: 750)
         case .settings:
-            return CGSize(width: 500, height: 300)
-        case .updates:
             return CGSize(width: 500, height: 300)
         }
     }
@@ -38,12 +35,6 @@ public struct SettingsView: View {
                     Label("Settings", systemImage: "gearshape")
                 }
                 .tag(AppTab.settings)
-            
-            UpdatesTab()
-                .tabItem {
-                    Label("Updates", systemImage: "arrow.triangle.2.circlepath.circle")
-                }
-                .tag(AppTab.updates)
         }
         .onChange(of: selectedTab) { newTab in
             resizeWindow(to: newTab.windowSize)

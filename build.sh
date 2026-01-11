@@ -54,10 +54,6 @@ cat > build/DiscordRPC-Idler.app/Contents/Info.plist << 'EOF'
 	<string>Copyright © 2026. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>SUFeedURL</key>
-	<string>https://mlemors.github.io/discordrpc-idler/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>hyNqw4e6wICfKwmUuDv0xfp7YFCps2qqIVYGO2HsKlk=</string>
 </dict>
 </plist>
 EOF
