@@ -12,92 +12,88 @@ public struct ApplicationTab: View {
     public var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Preview at the top
-                VStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
+
                     // Activity Type Badge
-                    HStack {
-                        Text(settings.activityType.displayName)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.gray.opacity(0.6))
-                            .cornerRadius(4)
-                        Spacer()
-                    }
+                    Text(settings.activityType.displayName)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.6))
+                        .cornerRadius(4)
+                        .padding(1)
                     
-                    // Discord Rich Presence Preview Card
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(alignment: .top, spacing: 12) {
-                            // Large Image Placeholder
-                            ZStack(alignment: .bottomTrailing) {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 80, height: 80)
+                    HStack(alignment: .top, spacing: 12) {
+                        // Large Image Placeholder
+                        ZStack(alignment: .bottomTrailing) {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 80, height: 80)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            // Application Name
+                            if !settings.appName.isEmpty {
+                                Text(settings.appName)
+                                    .font(.system(size: 14, weight: .semibold))
                             }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                // Application Name
-                                if !settings.appName.isEmpty {
-                                    Text(settings.appName)
-                                        .font(.system(size: 14, weight: .semibold))
-                                }
-                                
-                                // Details
-                                if !settings.details.isEmpty {
-                                    Text(settings.details)
-                                        .font(.system(size: 13))
-                                        .foregroundColor(.primary)
-                                }
-                                
-                                // State
-                                if !settings.state.isEmpty {
-                                    Text(settings.state)
-                                        .font(.system(size: 13))
-                                        .foregroundColor(.secondary)
-                                }
-                                
-                                // Elapsed Time
+
+                            // Details
+                            if !settings.details.isEmpty {
+                                Text(settings.details)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.primary)
+                            }
+
+                            // State
+                            if !settings.state.isEmpty {
+                                Text(settings.state)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.secondary)
+                            }
+
+                            // Elapsed Time
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 11))
+                                Text(formatElapsedTime(elapsedTime))
+                                    .font(.system(size: 13))
+                            }
+                            .foregroundColor(.secondary)
+
+                            // Party Info
+                            if settings.partySize > 0 && settings.partyMax > 0 {
                                 HStack(spacing: 4) {
-                                    Image(systemName: "clock")
+                                    Image(systemName: "person.2.fill")
                                         .font(.system(size: 11))
-                                    Text(formatElapsedTime(elapsedTime))
+                                    Text("In a party (\(settings.partySize) of \(settings.partyMax))")
                                         .font(.system(size: 13))
                                 }
                                 .foregroundColor(.secondary)
-                                
-                                // Party Info
-                                if settings.partySize > 0 && settings.partyMax > 0 {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "person.2.fill")
-                                            .font(.system(size: 11))
-                                        Text("In a party (\(settings.partySize) of \(settings.partyMax))")
-                                            .font(.system(size: 13))
-                                    }
-                                    .foregroundColor(.secondary)
-                                }
                             }
-                        }
-                        
-                        // Button
-                        if !settings.button1Text.isEmpty {
-                            Button(action: {}) {
-                                Text(settings.button1Text)
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
-                                    .background(Color.gray.opacity(0.4))
-                                    .cornerRadius(4)
-                            }
-                            .buttonStyle(.plain)
                         }
                     }
-                    .padding()
-                    .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
-                    .cornerRadius(8)
+
+                    // Button
+                    if !settings.button1Text.isEmpty {
+                        Button(action: {}) {
+                            Text(settings.button1Text)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Color.gray.opacity(0.4))
+                                .cornerRadius(4)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
+                .padding()
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
+                .cornerRadius(8)
+                .padding(.horizontal)
                 .padding(.bottom, 8)
                 
                 Divider()
@@ -225,3 +221,4 @@ struct ApplicationTab_Previews: PreviewProvider {
             .frame(width: 600, height: 800)
     }
 }
+
