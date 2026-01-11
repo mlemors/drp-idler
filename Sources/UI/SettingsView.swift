@@ -11,14 +11,9 @@ struct SettingsView: View {
                     Label("Application", systemImage: "app.dashed")
                 }
             
-            PreviewTab()
-                .tabItem {
-                    Label("Preview", systemImage: "eye")
-                }
-            
             MenuBarTab()
                 .tabItem {
-                    Label("Menu Bar", systemImage: "menubar.rectangle")
+                    Label("Settings", systemImage: "gearshape")
                 }
             
             UpdatesTab()
@@ -26,7 +21,7 @@ struct SettingsView: View {
                     Label("Updates", systemImage: "arrow.triangle.2.circlepath.circle")
                 }
         }
-        .frame(width: 700, height: 550)
+        .frame(width: 900, height: 600)
         .environmentObject(settings)
     }
 }
